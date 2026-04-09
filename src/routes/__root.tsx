@@ -1,6 +1,16 @@
-import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router"
+import {
+  HeadContent,
+  Outlet,
+  Scripts,
+  createRootRoute,
+} from "@tanstack/react-router"
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools"
 import { TanStackDevtools } from "@tanstack/react-devtools"
+import { Providers } from "@/components/providers"
+import { AppNavbar } from "@/components/app-navbar"
+import { AppSidebar } from "@/components/app-sidebar"
+import { AppSlot } from "@/components/app-slot"
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 
 import appCss from "../styles.css?url"
 
@@ -26,6 +36,7 @@ export const Route = createRootRoute({
     ],
   }),
   shellComponent: RootDocument,
+  component: RootLayout,
 })
 
 function RootDocument({ children }: { children: React.ReactNode }) {
@@ -35,7 +46,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        {children}
+        <Providers>{children}</Providers>
         <TanStackDevtools
           config={{
             position: "bottom-right",
@@ -50,5 +61,23 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <Scripts />
       </body>
     </html>
+  )
+}
+
+function RootLayout() {
+  return (
+    <SidebarProvider className="flex min-h-svh w-full flex-col">
+      <AppNavbar />
+      <div className="flex min-h-0 flex-1">
+        <AppSidebar />
+        <SidebarInset className="min-h-0">
+          <div className="flex min-h-0 flex-1 flex-col p-2">
+            <AppSlot>
+              <Outlet />
+            </AppSlot>
+          </div>
+        </SidebarInset>
+      </div>
+    </SidebarProvider>
   )
 }

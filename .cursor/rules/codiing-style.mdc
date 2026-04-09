@@ -1,0 +1,38 @@
+---
+description: General coding style and architecture rules
+globs: **/*
+alwaysApply: true
+---
+
+# Code Style
+
+## Comments
+- No comments unless code genuinely can't explain itself (regex, non-obvious math, API quirks)
+- A good name beats any comment
+
+## Naming
+- Intention-revealing, entity-based: `userForm`, `invoiceList`, `db`, `env`
+- Allowed abbreviations: `db`, `ctx`, `req`, `res`, `err`, `tmp`, `cfg`, `id`
+- No abbreviations that need decoding: never `uFrm`, `invLst`, `itmRndr`
+- Booleans: `isLoading`, `hasError`, `canSubmit`
+
+## Simplicity
+- Write the simplest correct solution — flat over nested, explicit over clever
+- Optimize for a new team member reading it in 5 seconds
+
+## Extensibility
+- Repeat once, abstract on second duplication — no premature abstraction
+- No config flags, options, or generics for hypothetical future use cases
+
+# Tradeoff Interruption Rule (Strict)
+When a task involves a genuine tradeoff (hard-code vs. config, inline vs. hook, single component vs. composable API) — **stop and ask**. State the tradeoff in one sentence, present two options. Never silently pick one.
+
+> Example: "This can be a single `<Card />` with props (simpler) or `<Card.Root><Card.Header /></Card.Root>` (composable). Which do you prefer?"
+
+# UI — Radix Composition
+- Small focused primitives, not monolithic components with many props
+- Always use compound pattern: `<Dialog.Root>`, `<Dialog.Trigger>`, `<Dialog.Content>`
+- Always spread props onto the underlying DOM node
+- Use `asChild` when the caller decides the element type
+- Components own behavior and accessibility — callers own styling
+- Never add a prop to control what composition already handles
