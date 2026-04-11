@@ -9,38 +9,129 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SurveysIndexRouteImport } from './routes/surveys.index'
+import { Route as FFormIdRouteImport } from './routes/f.$formId'
+import { Route as SurveysSurveyIdIndexRouteImport } from './routes/surveys.$surveyId.index'
+import { Route as SurveysSurveyIdFormIndexRouteImport } from './routes/surveys.$surveyId.form.index'
+import { Route as SurveysSurveyIdFormFormIdIndexRouteImport } from './routes/surveys.$surveyId.form.$formId.index'
 
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SurveysIndexRoute = SurveysIndexRouteImport.update({
+  id: '/surveys/',
+  path: '/surveys/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FFormIdRoute = FFormIdRouteImport.update({
+  id: '/f/$formId',
+  path: '/f/$formId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SurveysSurveyIdIndexRoute = SurveysSurveyIdIndexRouteImport.update({
+  id: '/surveys/$surveyId/',
+  path: '/surveys/$surveyId/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SurveysSurveyIdFormIndexRoute =
+  SurveysSurveyIdFormIndexRouteImport.update({
+    id: '/surveys/$surveyId/form/',
+    path: '/surveys/$surveyId/form/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const SurveysSurveyIdFormFormIdIndexRoute =
+  SurveysSurveyIdFormFormIdIndexRouteImport.update({
+    id: '/surveys/$surveyId/form/$formId/',
+    path: '/surveys/$surveyId/form/$formId/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/f/$formId': typeof FFormIdRoute
+  '/surveys/': typeof SurveysIndexRoute
+  '/surveys/$surveyId/': typeof SurveysSurveyIdIndexRoute
+  '/surveys/$surveyId/form/': typeof SurveysSurveyIdFormIndexRoute
+  '/surveys/$surveyId/form/$formId/': typeof SurveysSurveyIdFormFormIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/f/$formId': typeof FFormIdRoute
+  '/surveys': typeof SurveysIndexRoute
+  '/surveys/$surveyId': typeof SurveysSurveyIdIndexRoute
+  '/surveys/$surveyId/form': typeof SurveysSurveyIdFormIndexRoute
+  '/surveys/$surveyId/form/$formId': typeof SurveysSurveyIdFormFormIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/f/$formId': typeof FFormIdRoute
+  '/surveys/': typeof SurveysIndexRoute
+  '/surveys/$surveyId/': typeof SurveysSurveyIdIndexRoute
+  '/surveys/$surveyId/form/': typeof SurveysSurveyIdFormIndexRoute
+  '/surveys/$surveyId/form/$formId/': typeof SurveysSurveyIdFormFormIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/f/$formId'
+    | '/surveys/'
+    | '/surveys/$surveyId/'
+    | '/surveys/$surveyId/form/'
+    | '/surveys/$surveyId/form/$formId/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/login'
+    | '/f/$formId'
+    | '/surveys'
+    | '/surveys/$surveyId'
+    | '/surveys/$surveyId/form'
+    | '/surveys/$surveyId/form/$formId'
+  id:
+    | '__root__'
+    | '/'
+    | '/login'
+    | '/f/$formId'
+    | '/surveys/'
+    | '/surveys/$surveyId/'
+    | '/surveys/$surveyId/form/'
+    | '/surveys/$surveyId/form/$formId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  LoginRoute: typeof LoginRoute
+  FFormIdRoute: typeof FFormIdRoute
+  SurveysIndexRoute: typeof SurveysIndexRoute
+  SurveysSurveyIdIndexRoute: typeof SurveysSurveyIdIndexRoute
+  SurveysSurveyIdFormIndexRoute: typeof SurveysSurveyIdFormIndexRoute
+  SurveysSurveyIdFormFormIdIndexRoute: typeof SurveysSurveyIdFormFormIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +139,52 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/surveys/': {
+      id: '/surveys/'
+      path: '/surveys'
+      fullPath: '/surveys/'
+      preLoaderRoute: typeof SurveysIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/f/$formId': {
+      id: '/f/$formId'
+      path: '/f/$formId'
+      fullPath: '/f/$formId'
+      preLoaderRoute: typeof FFormIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/surveys/$surveyId/': {
+      id: '/surveys/$surveyId/'
+      path: '/surveys/$surveyId'
+      fullPath: '/surveys/$surveyId/'
+      preLoaderRoute: typeof SurveysSurveyIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/surveys/$surveyId/form/': {
+      id: '/surveys/$surveyId/form/'
+      path: '/surveys/$surveyId/form'
+      fullPath: '/surveys/$surveyId/form/'
+      preLoaderRoute: typeof SurveysSurveyIdFormIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/surveys/$surveyId/form/$formId/': {
+      id: '/surveys/$surveyId/form/$formId/'
+      path: '/surveys/$surveyId/form/$formId'
+      fullPath: '/surveys/$surveyId/form/$formId/'
+      preLoaderRoute: typeof SurveysSurveyIdFormFormIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  LoginRoute: LoginRoute,
+  FFormIdRoute: FFormIdRoute,
+  SurveysIndexRoute: SurveysIndexRoute,
+  SurveysSurveyIdIndexRoute: SurveysSurveyIdIndexRoute,
+  SurveysSurveyIdFormIndexRoute: SurveysSurveyIdFormIndexRoute,
+  SurveysSurveyIdFormFormIdIndexRoute: SurveysSurveyIdFormFormIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

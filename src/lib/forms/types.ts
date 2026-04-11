@@ -62,3 +62,8 @@ export type FormAnswerValue = string | number | string[] | null
 
 export type FormAnswersByQuestionId = Record<string, FormAnswerValue>
 
+export type FormResponseAnswer = {
+  question_id: string
+  value: string | number | string[]
+}
+

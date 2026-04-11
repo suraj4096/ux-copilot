@@ -1,12 +1,11 @@
 "use client"
 
 import { Link } from "@tanstack/react-router"
-import { HomeIcon, SparklesIcon } from "lucide-react"
+import { ClipboardListIcon, HomeIcon } from "lucide-react"
 
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -14,7 +13,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-  SidebarSeparator,
 } from "@/components/ui/sidebar"
 
 export function AppSidebar() {
@@ -38,11 +36,11 @@ export function AppSidebar() {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  tooltip="Builder"
+                  tooltip="Surveys"
                   render={
-                    <Link to="/">
-                      <SparklesIcon />
-                      <span>Builder</span>
+                    <Link to="/surveys">
+                      <ClipboardListIcon />
+                      <span>Surveys</span>
                     </Link>
                   }
                 />
@@ -50,24 +48,8 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        <SidebarSeparator />
       </SidebarContent>
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              tooltip="Footer"
-              render={
-                <button type="button">
-                  <span>Footer</span>
-                </button>
-              }
-            />
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   )
 }
-

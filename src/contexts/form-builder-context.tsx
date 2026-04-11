@@ -9,7 +9,7 @@ import {
 
 import type { BuilderFormValues } from "@/lib/forms/builder-types"
 import { createEmptyForm, createQuestion } from "@/lib/forms/defaults"
-import type { FormQuestionType } from "@/lib/forms/types"
+import type { FormQuestionType, FormSchema } from "@/lib/forms/types"
 
 type FormBuilderActions = {
   reset: () => void
@@ -46,10 +46,15 @@ const FormBuilderContext = React.createContext<FormBuilderContextValue | null>(
 
 export function FormBuilderProvider({
   children,
+  initialForm,
 }: {
   children: React.ReactNode
+  initialForm?: FormSchema
 }) {
-  const initialValues = React.useMemo(() => createEmptyForm(), [])
+  const initialValues = React.useMemo(() => {
+    if (initialForm) return structuredClone(initialForm)
+    return createEmptyForm()
+  }, [initialForm])
 
   const formApi = useForm<
     BuilderFormValues,
@@ -174,4 +179,3 @@ export function useFormBuilder() {
   }
   return ctx
 }
-

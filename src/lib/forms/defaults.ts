@@ -18,6 +18,18 @@ export function createEmptyForm(): FormSchema {
   }
 }
 
+export function cloneFormSchemaAsDraft(source: FormSchema): FormSchema {
+  return {
+    id: createId("form"),
+    title: source.title.trim() ? `${source.title.trim()} (copy)` : "Untitled form",
+    description: source.description ?? "",
+    questions: source.questions.map((q) => ({
+      ...q,
+      id: createId("q"),
+    })),
+  }
+}
+
 function defaultOption(label: string): FormChoiceOption {
   return { value: label.toLowerCase().replaceAll(/\s+/g, "_"), label }
 }

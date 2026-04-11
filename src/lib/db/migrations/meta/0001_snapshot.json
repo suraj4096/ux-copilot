@@ -1,6 +1,6 @@
 {
-  "id": "ba10b97e-7456-4ded-8466-88722e536f20",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "54c1aebf-1f68-4011-9b46-175ac7372937",
+  "prevId": "ba10b97e-7456-4ded-8466-88722e536f20",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -131,12 +131,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
         },
         "owner": {
           "name": "owner",

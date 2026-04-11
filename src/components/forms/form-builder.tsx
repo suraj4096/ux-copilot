@@ -17,7 +17,7 @@ import { getEmptyImage } from "react-dnd-html5-backend"
 
 import type { FormQuestionType } from "@/lib/forms/types"
 import { cn } from "@/lib/utils"
-import { useFormBuilder } from "@/components/forms/form-builder-context"
+import { useFormBuilder } from "@/contexts/form-builder-context"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"

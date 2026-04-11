@@ -5,8 +5,22 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1775831869505,
-      "tag": "0000_serious_pandemic",
+      "when": 1775918259496,
+      "tag": "0000_boring_leech",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1775918564527,
+      "tag": "0001_dusty_king_bedlam",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1775918744312,
+      "tag": "0002_perpetual_violations",
       "breakpoints": true
     }
   ]

@@ -2,12 +2,15 @@
 
 import * as React from "react"
 import { useForm } from "@tanstack/react-form"
+import { useServerFn } from "@tanstack/react-start"
 
-import type { FormSchema } from "@/lib/forms/types"
+import type { FormAnswersByQuestionId, FormSchema } from "@/lib/forms/types"
 import {
+  answersRecordToSubmissionArray,
   coerceAnswerForQuestion,
   createEmptyAnswers,
 } from "@/lib/forms/answers"
+import { submitFormResponseFn } from "@/lib/form-responses.functions"
 import { cn } from "@/lib/utils"
 
 import { Button } from "@/components/ui/button"
@@ -27,16 +30,51 @@ import { Checkbox } from "@/components/ui/checkbox"
 export function FormRenderer({
   form,
   className,
+  mode = "preview",
+  surveyFormId,
+  onSubmitted,
 }: {
   form: FormSchema
   className?: string
+  mode?: "preview" | "submit"
+  surveyFormId?: string
+  onSubmitted?: () => void
 }) {
+  const submitResponse = useServerFn(submitFormResponseFn)
+  const [submitError, setSubmitError] = React.useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const formRef = React.useRef<{ reset: (v: { answers: FormAnswersByQuestionId }) => void } | null>(
+    null,
+  )
+
   const formInstance = useForm({
     defaultValues: {
       answers: createEmptyAnswers(form),
     },
-    onSubmit: async () => {},
+    onSubmit: async ({ value }) => {
+      setSubmitError(null)
+      if (mode !== "submit" || !surveyFormId) return
+
+      setIsSubmitting(true)
+      try {
+        const answers = value.answers as FormAnswersByQuestionId
+        const payload = answersRecordToSubmissionArray(form, answers)
+        const res = await submitResponse({
+          data: { surveyFormId, answers: payload },
+        })
+        if (!res.ok) {
+          setSubmitError(res.errors.join(" "))
+          return
+        }
+        formRef.current?.reset({ answers: createEmptyAnswers(form) })
+        onSubmitted?.()
+      } finally {
+        setIsSubmitting(false)
+      }
+    },
   })
+
+  formRef.current = formInstance
 
   React.useEffect(() => {
     formInstance.reset({
@@ -61,6 +99,12 @@ export function FormRenderer({
           </div>
         ) : null}
       </div>
+
+      {submitError ? (
+        <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+          {submitError}
+        </div>
+      ) : null}
 
       {form.questions.map((q) => {
         const name = `answers.${q.id}` as const
@@ -242,9 +286,13 @@ export function FormRenderer({
         )
       })}
 
-      <div className="flex items-center justify-end gap-2">
-        <Button type="submit">Submit</Button>
-      </div>
+      {mode === "submit" ? (
+        <div className="flex items-center justify-end gap-2">
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Submitting…" : "Submit"}
+          </Button>
+        </div>
+      ) : null}
     </form>
   )
 }

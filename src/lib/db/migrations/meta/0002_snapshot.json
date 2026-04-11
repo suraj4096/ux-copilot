@@ -1,11 +1,110 @@
 {
-  "id": "ba10b97e-7456-4ded-8466-88722e536f20",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "190b3fa4-91df-466b-b9b6-f8c745bfc792",
+  "prevId": "54c1aebf-1f68-4011-9b46-175ac7372937",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.form": {
-      "name": "form",
+    "public.form_response": {
+      "name": "form_response",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "survey_form_id": {
+          "name": "survey_form_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "submitted_at": {
+          "name": "submitted_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "answers": {
+          "name": "answers",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "form_response_survey_form_id_survey_form_id_fk": {
+          "name": "form_response_survey_form_id_survey_form_id_fk",
+          "tableFrom": "form_response",
+          "tableTo": "survey_form",
+          "columnsFrom": [
+            "survey_form_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.survey": {
+      "name": "survey",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "owner": {
+          "name": "owner",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "survey_owner_user_email_fk": {
+          "name": "survey_owner_user_email_fk",
+          "tableFrom": "survey",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner"
+          ],
+          "columnsTo": [
+            "email"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.survey_form": {
+      "name": "survey_form",
       "schema": "",
       "columns": {
         "id": {
@@ -42,120 +141,15 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "form_survey_id_survey_id_fk": {
-          "name": "form_survey_id_survey_id_fk",
-          "tableFrom": "form",
+        "survey_form_survey_id_survey_id_fk": {
+          "name": "survey_form_survey_id_survey_id_fk",
+          "tableFrom": "survey_form",
           "tableTo": "survey",
           "columnsFrom": [
             "survey_id"
           ],
           "columnsTo": [
             "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "cascade"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.response": {
-      "name": "response",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "form_id": {
-          "name": "form_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "submitted_at": {
-          "name": "submitted_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "answers": {
-          "name": "answers",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "response_form_id_form_id_fk": {
-          "name": "response_form_id_form_id_fk",
-          "tableFrom": "response",
-          "tableTo": "form",
-          "columnsFrom": [
-            "form_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "cascade"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.survey": {
-      "name": "survey",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "title": {
-          "name": "title",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "owner": {
-          "name": "owner",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "survey_owner_user_email_fk": {
-          "name": "survey_owner_user_email_fk",
-          "tableFrom": "survey",
-          "tableTo": "user",
-          "columnsFrom": [
-            "owner"
-          ],
-          "columnsTo": [
-            "email"
           ],
           "onDelete": "cascade",
           "onUpdate": "cascade"

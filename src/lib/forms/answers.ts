@@ -2,6 +2,7 @@ import type {
   FormAnswersByQuestionId,
   FormAnswerValue,
   FormQuestion,
+  FormResponseAnswer,
   FormSchema,
 } from "@/lib/forms/types"
 
@@ -40,6 +41,34 @@ export function coerceAnswerForQuestion(
     case "multi_choice":
       return Array.isArray(value) ? value.map(String) : [String(value)]
   }
+}
+
+export function answersRecordToSubmissionArray(
+  form: FormSchema,
+  answers: FormAnswersByQuestionId,
+): FormResponseAnswer[] {
+  const out: FormResponseAnswer[] = []
+  for (const q of form.questions) {
+    const raw = answers[q.id]
+    if (
+      raw == null ||
+      (typeof raw === "string" && raw.trim() === "") ||
+      (Array.isArray(raw) && raw.length === 0)
+    ) {
+      continue
+    }
+    if (q.type === "multi_choice") {
+      const arr = Array.isArray(raw) ? raw.map(String) : [String(raw)]
+      out.push({ question_id: q.id, value: arr })
+      continue
+    }
+    if (q.type === "number" && typeof raw === "number") {
+      out.push({ question_id: q.id, value: raw })
+      continue
+    }
+    out.push({ question_id: q.id, value: String(raw) })
+  }
+  return out
 }
 
 export function validateAnswers(form: FormSchema, answers: FormAnswersByQuestionId) {
