@@ -2,8 +2,8 @@
 
 import * as React from "react"
 
-import { FormRenderer } from "@/components/forms/form-renderer"
 import type { FormSchema } from "@/lib/forms/types"
+import { FormRenderer } from "@/components/forms/form-renderer"
 
 export function PublicFormPage({
   formId,

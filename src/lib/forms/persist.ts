@@ -4,13 +4,13 @@ import type {
   FormSchema,
 } from "@/lib/forms/types"
 
+import type { ValidationResult } from "@/lib/forms/validator/result"
+import type { StoredFormTemplate } from "@/lib/forms/validator/template"
 import {
   validateFormResponsePayload,
   validateFormSchema,
   validateStoredFormTemplate,
 } from "@/lib/forms/validator"
-import type { ValidationResult } from "@/lib/forms/validator/result"
-import type { StoredFormTemplate } from "@/lib/forms/validator/template"
 
 export type SurveyFormRowShape = {
   id: string
@@ -63,15 +63,9 @@ export function parseBuilderPayloadForWrite(
   }
 }
 
-export function parseTemplatePatchForWrite(
-  input: unknown,
-): ValidationResult<StoredFormTemplate> {
-  return validateStoredFormTemplate(input)
-}
-
 export function parseResponseAnswersForPersist(
-  questions: FormQuestion[],
+  questions: Array<FormQuestion>,
   input: unknown,
-): ValidationResult<FormResponseAnswer[]> {
+): ValidationResult<Array<FormResponseAnswer>> {
   return validateFormResponsePayload(questions, input)
 }

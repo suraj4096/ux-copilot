@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react"
 
+import type { FormSchema } from "@/lib/forms/types"
+import type {ResponseTableRow} from "@/lib/forms/response-display";
 import { FormResponseViewDialog } from "@/components/form-response-view-dialog"
 import { questionColumnPreset } from "@/components/form-responses-presentation"
 import { Button } from "@/components/ui/button"
@@ -12,10 +14,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import {
-  buildResponseTableRows,
-  type ResponseTableRow,
+  
+  buildResponseTableRows
 } from "@/lib/forms/response-display"
-import type { FormSchema } from "@/lib/forms/types"
 import { cn } from "@/lib/utils"
 
 export function FormResponsesCards({
@@ -98,9 +99,9 @@ export function FormResponsesCards({
             </header>
             <div className="divide-y">
               {row.cells.map((cell, i) => {
-                const question = form.questions[i]
-                if (!question) return null
-                const { Icon, typeLabel } = presets[i]!
+                const question = form.questions.find((q) => q.id === cell.questionId)
+                if (question === undefined) return null
+                const { Icon, typeLabel } = presets[i]
                 return (
                   <div
                     key={cell.questionId}

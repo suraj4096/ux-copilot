@@ -57,11 +57,11 @@ export function FormRenderer({
 
       setIsSubmitting(true)
       try {
-        const answers = value.answers as FormAnswersByQuestionId
+        const answers = value.answers
         const payload = answersRecordToSubmissionArray(form, answers)
-        const res = await submitResponse({
+        const res = (await submitResponse({
           data: { surveyFormId, answers: payload },
-        })
+        })) as { ok: false; errors: Array<string> } | { ok: true }
         if (!res.ok) {
           setSubmitError(res.errors.join(" "))
           return
@@ -234,7 +234,7 @@ export function FormRenderer({
                           {q.options.map((opt) => {
                             const id = `${q.id}_${opt.value}`
                             const current = Array.isArray(field.state.value)
-                              ? (field.state.value as string[])
+                              ? (field.state.value as Array<string>)
                               : []
                             const checked = current.includes(opt.value)
                             return (

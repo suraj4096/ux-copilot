@@ -5,13 +5,13 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Link, useNavigate } from "@tanstack/react-router"
 import { useServerFn } from "@tanstack/react-start"
 
+import type { FormSchema } from "@/lib/forms/types"
 import { FormBuilder } from "@/components/forms/form-builder"
 import { useFormBuilder } from "@/contexts/form-builder-context"
 import { FormRenderer } from "@/components/forms/form-renderer"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import type { BuilderFormValues } from "@/lib/forms/builder-types"
 import { createSurveyFormFn } from "@/lib/data.functions"
 import { surveyDetailQueryOptions } from "@/lib/query-options"
 
@@ -31,8 +31,10 @@ export function SurveyFormEditorPage({
   const [activeTab, setActiveTab] = React.useState("edit")
 
   const saveMutation = useMutation({
-    mutationFn: async (payload: BuilderFormValues) => {
-      const res = await createForm({ data: { surveyId, payload } })
+    mutationFn: async (payload: FormSchema) => {
+      const res = (await createForm({ data: { surveyId, payload } })) as
+        | { ok: false; errors: Array<string> }
+        | { ok: true; form: { id: string } }
       if (!res.ok) throw new Error(res.errors.join(" "))
       return res
     },

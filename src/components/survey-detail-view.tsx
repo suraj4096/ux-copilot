@@ -23,7 +23,9 @@ export function SurveyDetailView({ surveyId }: { surveyId: string }) {
 
   const deleteSurveyMutation = useMutation({
     mutationFn: async () => {
-      const res = await deleteSurvey({ data: { surveyId } })
+      const res = (await deleteSurvey({ data: { surveyId } })) as
+        | { ok: false; errors: Array<string> }
+        | { ok: true }
       if (!res.ok) throw new Error(res.errors.join(" "))
       return res
     },
@@ -37,7 +39,9 @@ export function SurveyDetailView({ surveyId }: { surveyId: string }) {
 
   const deleteFormMutation = useMutation({
     mutationFn: async (formId: string) => {
-      const res = await deleteForm({ data: { formId } })
+      const res = (await deleteForm({ data: { formId } })) as
+        | { ok: false; errors: Array<string> }
+        | { ok: true }
       if (!res.ok) throw new Error(res.errors.join(" "))
       return res
     },
@@ -106,6 +110,7 @@ export function SurveyDetailView({ surveyId }: { surveyId: string }) {
         <Link
           to="/surveys/$surveyId/form"
           params={{ surveyId }}
+          search={{ cloneFrom: undefined }}
           className={cn(buttonVariants())}
         >
           New form

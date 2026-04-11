@@ -1,15 +1,32 @@
 import { queryOptions } from "@tanstack/react-query"
 
+import type { FormSchema } from "@/lib/forms/types"
 import {
+  getSurveyFn,
   getSurveyFormForOwnerFn,
   getSurveyFormPublicFn,
-  getSurveyFn,
   listFormResponsesFn,
   listSurveyFormsFn,
   listSurveysFn,
 } from "@/lib/data.functions"
 import { cloneFormSchemaAsDraft } from "@/lib/forms/defaults"
-import type { FormSchema } from "@/lib/forms/types"
+
+export type FormResponsesPageQueryData = {
+  formRes:
+    | { ok: false; errors: Array<string> }
+    | { ok: true; form: FormSchema; surveyId: string }
+  responsesRes:
+    | { ok: false; errors: Array<string> }
+    | {
+        ok: true
+        responses: Array<{
+          id: string
+          surveyFormId: string
+          submittedAt: Date | string
+          answers: unknown
+        }>
+      }
+}
 
 export const listSurveysQueryOptions = () =>
   queryOptions({
@@ -66,12 +83,12 @@ export const newFormCloneQueryOptions = (
 export const formResponsesPageQueryOptions = (surveyId: string, formId: string) =>
   queryOptions({
     queryKey: ["surveyForm", formId, "responses", surveyId] as const,
-    queryFn: async () => {
+    queryFn: async (): Promise<FormResponsesPageQueryData> => {
       const [formRes, responsesRes] = await Promise.all([
         getSurveyFormForOwnerFn({ data: { formId } }),
         listFormResponsesFn({ data: { surveyFormId: formId } }),
       ])
-      return { formRes, responsesRes }
+      return { formRes, responsesRes } as FormResponsesPageQueryData
     },
   })
 

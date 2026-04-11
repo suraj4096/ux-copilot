@@ -1,13 +1,14 @@
-import { coerceAnswerForQuestion } from "@/lib/forms/answers"
 import type {
   FormQuestion,
   FormResponseAnswer,
 } from "@/lib/forms/types"
+import type {ValidationResult} from "@/lib/forms/validator/result";
+import { coerceAnswerForQuestion } from "@/lib/forms/answers"
 
 import {
+  
   validationFailure,
-  validationOk,
-  type ValidationResult,
+  validationOk
 } from "@/lib/forms/validator/result"
 
 function isRecord(v: unknown): v is Record<string, unknown> {
@@ -109,9 +110,9 @@ function toResponseValue(
 }
 
 export function validateFormResponsePayload(
-  questions: FormQuestion[],
+  questions: Array<FormQuestion>,
   input: unknown,
-): ValidationResult<FormResponseAnswer[]> {
+): ValidationResult<Array<FormResponseAnswer>> {
   if (!Array.isArray(input)) {
     return validationFailure(["Answers must be an array."])
   }
@@ -143,8 +144,8 @@ export function validateFormResponsePayload(
     byQuestionId.set(qid, row.value)
   }
 
-  const out: FormResponseAnswer[] = []
-  const errors: string[] = []
+  const out: Array<FormResponseAnswer> = []
+  const errors: Array<string> = []
 
   for (const question of questions) {
     const raw = byQuestionId.get(question.id)

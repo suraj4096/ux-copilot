@@ -14,23 +14,23 @@ export async function getUserByEmail(email: string) {
     .from(user)
     .where(ilike(user.email, email.trim()))
     .limit(1)
-  return rows[0] ?? null
+  return rows.at(0) ?? null
 }
 
 export async function createSurvey(ownerEmail: string, title: string) {
-  const [row] = await db
+  const rows = await db
     .insert(survey)
     .values({ title, owner: ownerEmail })
     .returning()
-  return row ?? null
+  return rows.at(0) ?? null
 }
 
 export async function deleteSurvey(ownerEmail: string, surveyId: string) {
-  const [row] = await db
+  const rows = await db
     .delete(survey)
     .where(and(eq(survey.id, surveyId), eq(survey.owner, ownerEmail)))
     .returning()
-  return row ?? null
+  return rows.at(0) ?? null
 }
 
 export async function listSurveysByOwner(ownerEmail: string) {
@@ -41,24 +41,24 @@ export async function listSurveysByOwner(ownerEmail: string) {
 }
 
 export async function getSurveyForOwner(ownerEmail: string, surveyId: string) {
-  const [row] = await db
+  const rows = await db
     .select()
     .from(survey)
     .where(and(eq(survey.id, surveyId), eq(survey.owner, ownerEmail)))
     .limit(1)
-  return row ?? null
+  return rows.at(0) ?? null
 }
 
 export async function listSurveyFormsBySurveyId(
   ownerEmail: string,
   surveyId: string,
 ) {
-  const [owned] = await db
+  const ownershipRows = await db
     .select({ id: survey.id })
     .from(survey)
     .where(and(eq(survey.id, surveyId), eq(survey.owner, ownerEmail)))
     .limit(1)
-  if (!owned) return null
+  if (ownershipRows.at(0) === undefined) return null
 
   return db
     .select({
@@ -73,7 +73,7 @@ export async function listSurveyFormsBySurveyId(
 }
 
 export async function getSurveyFormById(formId: string) {
-  const [row] = await db
+  const rows = await db
     .select({
       id: surveyForm.id,
       surveyId: surveyForm.surveyId,
@@ -84,11 +84,11 @@ export async function getSurveyFormById(formId: string) {
     .from(surveyForm)
     .where(eq(surveyForm.id, formId))
     .limit(1)
-  return row ?? null
+  return rows.at(0) ?? null
 }
 
 export async function getSurveyFormForOwner(ownerEmail: string, formId: string) {
-  const [row] = await db
+  const rows = await db
     .select({
       id: surveyForm.id,
       surveyId: surveyForm.surveyId,
@@ -100,7 +100,7 @@ export async function getSurveyFormForOwner(ownerEmail: string, formId: string) 
     .innerJoin(survey, eq(surveyForm.surveyId, survey.id))
     .where(and(eq(surveyForm.id, formId), eq(survey.owner, ownerEmail)))
     .limit(1)
-  return row ?? null
+  return rows.at(0) ?? null
 }
 
 export async function createSurveyForm(
@@ -112,14 +112,14 @@ export async function createSurveyForm(
     template: unknown
   },
 ) {
-  const [allowed] = await db
+  const allowedRows = await db
     .select({ id: survey.id })
     .from(survey)
     .where(and(eq(survey.id, input.surveyId), eq(survey.owner, ownerEmail)))
     .limit(1)
-  if (!allowed) return null
+  if (allowedRows.at(0) === undefined) return null
 
-  const [row] = await db
+  const rows = await db
     .insert(surveyForm)
     .values({
       surveyId: input.surveyId,
@@ -128,50 +128,50 @@ export async function createSurveyForm(
       template: input.template,
     })
     .returning()
-  return row ?? null
+  return rows.at(0) ?? null
 }
 
 export async function deleteSurveyForm(ownerEmail: string, formId: string) {
-  const [target] = await db
+  const targetRows = await db
     .select({ id: surveyForm.id })
     .from(surveyForm)
     .innerJoin(survey, eq(surveyForm.surveyId, survey.id))
     .where(and(eq(surveyForm.id, formId), eq(survey.owner, ownerEmail)))
     .limit(1)
-  if (!target) return null
+  if (targetRows.at(0) === undefined) return null
 
-  const [row] = await db
+  const rows = await db
     .delete(surveyForm)
     .where(eq(surveyForm.id, formId))
     .returning()
-  return row ?? null
+  return rows.at(0) ?? null
 }
 
 export async function createFormResponse(input: {
   surveyFormId: string
   answers: unknown
 }) {
-  const [row] = await db
+  const rows = await db
     .insert(formResponse)
     .values({
       surveyFormId: input.surveyFormId,
       answers: input.answers,
     })
     .returning()
-  return row ?? null
+  return rows.at(0) ?? null
 }
 
 export async function listFormResponsesByFormId(
   ownerEmail: string,
   surveyFormId: string,
 ) {
-  const [owned] = await db
+  const ownershipRows = await db
     .select({ id: surveyForm.id })
     .from(surveyForm)
     .innerJoin(survey, eq(surveyForm.surveyId, survey.id))
     .where(and(eq(surveyForm.id, surveyFormId), eq(survey.owner, ownerEmail)))
     .limit(1)
-  if (!owned) return null
+  if (ownershipRows.at(0) === undefined) return null
 
   return db
     .select()
@@ -184,18 +184,18 @@ export async function deleteFormResponse(
   ownerEmail: string,
   responseId: string,
 ) {
-  const [target] = await db
+  const targetRows = await db
     .select({ id: formResponse.id })
     .from(formResponse)
     .innerJoin(surveyForm, eq(formResponse.surveyFormId, surveyForm.id))
     .innerJoin(survey, eq(surveyForm.surveyId, survey.id))
     .where(and(eq(formResponse.id, responseId), eq(survey.owner, ownerEmail)))
     .limit(1)
-  if (!target) return null
+  if (targetRows.at(0) === undefined) return null
 
-  const [row] = await db
+  const rows = await db
     .delete(formResponse)
     .where(eq(formResponse.id, responseId))
     .returning()
-  return row ?? null
+  return rows.at(0) ?? null
 }

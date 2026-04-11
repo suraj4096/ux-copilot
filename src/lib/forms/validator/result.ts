@@ -1,8 +1,8 @@
 export type ValidationResult<T> =
   | { ok: true; value: T }
-  | { ok: false; errors: string[] }
+  | { ok: false; errors: Array<string> }
 
-export function validationFailure(errors: string[]): ValidationResult<never> {
+export function validationFailure(errors: Array<string>): ValidationResult<never> {
   return { ok: false, errors }
 }
 

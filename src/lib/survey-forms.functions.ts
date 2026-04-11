@@ -19,7 +19,7 @@ function requireUser() {
 
 export const getSurveyFormPublicFn = createServerFn({ method: "GET" })
   .inputValidator((data: { formId: string }) => {
-    if (typeof data?.formId !== "string" || !data.formId.trim()) {
+    if (typeof data.formId !== "string" || !data.formId.trim()) {
       throw new Error("formId is required")
     }
     return { formId: data.formId.trim() }
@@ -45,7 +45,7 @@ export const getSurveyFormPublicFn = createServerFn({ method: "GET" })
 
 export const getSurveyFormForOwnerFn = createServerFn({ method: "GET" })
   .inputValidator((data: { formId: string }) => {
-    if (typeof data?.formId !== "string" || !data.formId.trim()) {
+    if (typeof data.formId !== "string" || !data.formId.trim()) {
       throw new Error("formId is required")
     }
     return { formId: data.formId.trim() }
@@ -81,7 +81,7 @@ export const getSurveyFormForOwnerFn = createServerFn({ method: "GET" })
 
 export const listSurveyFormsFn = createServerFn({ method: "GET" })
   .inputValidator((data: { surveyId: string }) => {
-    if (typeof data?.surveyId !== "string" || !data.surveyId.trim()) {
+    if (typeof data.surveyId !== "string" || !data.surveyId.trim()) {
       throw new Error("surveyId is required")
     }
     return { surveyId: data.surveyId.trim() }
@@ -102,7 +102,7 @@ export const listSurveyFormsFn = createServerFn({ method: "GET" })
 
 export const createSurveyFormFn = createServerFn({ method: "POST" })
   .inputValidator((data: { surveyId: string; payload: unknown }) => {
-    if (typeof data?.surveyId !== "string" || !data.surveyId.trim()) {
+    if (typeof data.surveyId !== "string" || !data.surveyId.trim()) {
       throw new Error("surveyId is required")
     }
     return { surveyId: data.surveyId.trim(), payload: data.payload }
@@ -128,12 +128,15 @@ export const createSurveyFormFn = createServerFn({ method: "POST" })
         errors: ["Survey not found or you do not have access"],
       }
     }
-    return { ok: true as const, form: row }
+    return {
+      ok: true as const,
+      form: { ...row, template: row.template as {} },
+    }
   })
 
 export const deleteSurveyFormFn = createServerFn({ method: "POST" })
   .inputValidator((data: { formId: string }) => {
-    if (typeof data?.formId !== "string" || !data.formId.trim()) {
+    if (typeof data.formId !== "string" || !data.formId.trim()) {
       throw new Error("formId is required")
     }
     return { formId: data.formId.trim() }
@@ -149,5 +152,8 @@ export const deleteSurveyFormFn = createServerFn({ method: "POST" })
         errors: ["Form not found or you do not have access"],
       }
     }
-    return { ok: true as const, form: row }
+    return {
+      ok: true as const,
+      form: { ...row, template: row.template as {} },
+    }
   })

@@ -1,9 +1,9 @@
-import { coerceAnswerForQuestion } from "@/lib/forms/answers"
 import type {
   FormAnswerValue,
   FormQuestion,
   FormSchema,
 } from "@/lib/forms/types"
+import { coerceAnswerForQuestion } from "@/lib/forms/answers"
 import { validateCoercedAnswerForQuestion } from "@/lib/forms/validator/response"
 
 function isRecord(v: unknown): v is Record<string, unknown> {
@@ -32,8 +32,8 @@ export function extractAnswersMapFromStored(answers: unknown): Map<string, unkno
 function collectStoredAnswersStructureIssues(
   knownQuestionIds: Set<string>,
   answers: unknown,
-): string[] {
-  const errors: string[] = []
+): Array<string> {
+  const errors: Array<string> = []
   if (!Array.isArray(answers)) {
     errors.push("Answers must be an array.")
     return errors
@@ -109,8 +109,8 @@ export type ResponseTableCell = {
 export type ResponseTableRow = {
   responseId: string
   submittedAt: Date | string
-  cells: ResponseTableCell[]
-  payloadErrors: string[]
+  cells: Array<ResponseTableCell>
+  payloadErrors: Array<string>
 }
 
 export function buildResponseTableRows(
@@ -120,7 +120,7 @@ export function buildResponseTableRows(
     submittedAt: Date | string
     answers: unknown
   }>,
-): ResponseTableRow[] {
+): Array<ResponseTableRow> {
   const knownQuestionIds = new Set(form.questions.map((q) => q.id))
 
   return responses.map((r) => {
@@ -131,7 +131,7 @@ export function buildResponseTableRows(
 
     const byId = extractAnswersMapFromStored(r.answers)
 
-    const cells: ResponseTableCell[] = form.questions.map((question) => {
+    const cells: Array<ResponseTableCell> = form.questions.map((question) => {
       const raw = byId.get(question.id)
 
       if (raw === undefined) {

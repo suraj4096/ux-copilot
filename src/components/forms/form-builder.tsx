@@ -147,7 +147,7 @@ function FormCanvas({
   onMoveQuestion,
 }: {
   formApi: any
-  questions: any[]
+  questions: Array<any>
   removeQuestionAtIndex: (index: number) => void
   onAddQuestion: (type: FormQuestionType) => void
   onInsertQuestion: (index: number, type: FormQuestionType) => void
@@ -533,11 +533,11 @@ function QuestionCard({
   )
 }
 
-function FormBuilderDragLayer({ questions }: { questions: any[] }) {
+function FormBuilderDragLayer({ questions }: { questions: Array<any> }) {
   const collected = useDragLayer((monitor) => ({
     isDragging: monitor.isDragging(),
     itemType: monitor.getItemType(),
-    item: monitor.getItem() as any,
+    item: monitor.getItem(),
     currentOffset: monitor.getSourceClientOffset(),
   }))
 
@@ -554,7 +554,7 @@ function FormBuilderDragLayer({ questions }: { questions: any[] }) {
     transform: `translate(${collected.currentOffset.x}px, ${collected.currentOffset.y}px)`,
   }
 
-  const item = collected.item as any
+  const item = collected.item
 
   let questionType: FormQuestionType | null = null
 
@@ -567,8 +567,8 @@ function FormBuilderDragLayer({ questions }: { questions: any[] }) {
     item.kind === "question" &&
     item.questionId
   ) {
-    const q = questions.find((q) => q?.id === item.questionId)
-    questionType = (q?.type as FormQuestionType) ?? null
+    const matched = questions.find((qu) => qu.id === item.questionId)
+    questionType = matched?.type ?? null
   }
 
   if (!questionType) return null
@@ -643,7 +643,7 @@ function ChoiceOptionsEditor({
                               .toLowerCase()
                               .replaceAll(/\s+/g, "_")
                             labelField.handleChange(label)
-                            ;(formApi as any).setFieldValue(valueName, () => value)
+                            ;(formApi).setFieldValue(valueName, () => value)
                           }}
                           autoComplete="off"
                         />

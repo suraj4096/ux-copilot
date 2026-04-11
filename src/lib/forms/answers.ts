@@ -1,6 +1,6 @@
 import type {
-  FormAnswersByQuestionId,
   FormAnswerValue,
+  FormAnswersByQuestionId,
   FormQuestion,
   FormResponseAnswer,
   FormSchema,
@@ -46,8 +46,8 @@ export function coerceAnswerForQuestion(
 export function answersRecordToSubmissionArray(
   form: FormSchema,
   answers: FormAnswersByQuestionId,
-): FormResponseAnswer[] {
-  const out: FormResponseAnswer[] = []
+): Array<FormResponseAnswer> {
+  const out: Array<FormResponseAnswer> = []
   for (const q of form.questions) {
     const raw = answers[q.id]
     if (

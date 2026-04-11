@@ -2,6 +2,8 @@
 
 import { useMemo } from "react"
 
+import type { ResponseTableRow } from "@/lib/forms/response-display"
+import type { FormSchema } from "@/lib/forms/types"
 import { questionColumnPreset } from "@/components/form-responses-presentation"
 import { Button } from "@/components/ui/button"
 import {
@@ -13,8 +15,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import type { ResponseTableRow } from "@/lib/forms/response-display"
-import type { FormSchema } from "@/lib/forms/types"
 import { cn } from "@/lib/utils"
 
 function formatSubmittedAt(value: Date | string) {
@@ -69,9 +69,9 @@ export function FormResponseViewDialog({
             <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
               <ol className="space-y-8">
                 {row.cells.map((cell, i) => {
-                  const question = form.questions[i]
-                  if (!question) return null
-                  const { Icon, typeLabel } = presets[i]!
+                  const question = form.questions.find((q) => q.id === cell.questionId)
+                  if (question === undefined) return null
+                  const { Icon, typeLabel } = presets[i]
                   return (
                     <li key={cell.questionId} className="scroll-mt-4">
                       <div className="flex gap-4">

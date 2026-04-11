@@ -14,7 +14,7 @@ function requireUser() {
 
 export const createSurveyFn = createServerFn({ method: "POST" })
   .inputValidator((data: { title: string }) => {
-    if (typeof data?.title !== "string" || !data.title.trim()) {
+    if (typeof data.title !== "string" || !data.title.trim()) {
       throw new Error("title is required")
     }
     return { title: data.title.trim() }
@@ -42,7 +42,7 @@ export const listSurveysFn = createServerFn({ method: "GET" }).handler(
 
 export const getSurveyFn = createServerFn({ method: "GET" })
   .inputValidator((data: { surveyId: string }) => {
-    if (typeof data?.surveyId !== "string" || !data.surveyId.trim()) {
+    if (typeof data.surveyId !== "string" || !data.surveyId.trim()) {
       throw new Error("surveyId is required")
     }
     return { surveyId: data.surveyId.trim() }
@@ -63,7 +63,7 @@ export const getSurveyFn = createServerFn({ method: "GET" })
 
 export const deleteSurveyFn = createServerFn({ method: "POST" })
   .inputValidator((data: { surveyId: string }) => {
-    if (typeof data?.surveyId !== "string" || !data.surveyId.trim()) {
+    if (typeof data.surveyId !== "string" || !data.surveyId.trim()) {
       throw new Error("surveyId is required")
     }
     return { surveyId: data.surveyId.trim() }

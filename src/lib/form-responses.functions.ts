@@ -18,7 +18,7 @@ function requireUser() {
 
 export const submitFormResponseFn = createServerFn({ method: "POST" })
   .inputValidator((data: { surveyFormId: string; answers: unknown }) => {
-    if (typeof data?.surveyFormId !== "string" || !data.surveyFormId.trim()) {
+    if (typeof data.surveyFormId !== "string" || !data.surveyFormId.trim()) {
       throw new Error("surveyFormId is required")
     }
     return { surveyFormId: data.surveyFormId.trim(), answers: data.answers }
@@ -55,12 +55,15 @@ export const submitFormResponseFn = createServerFn({ method: "POST" })
       return { ok: false as const, errors: ["Could not save response"] }
     }
 
-    return { ok: true as const, response: inserted }
+    return {
+      ok: true as const,
+      response: { ...inserted, answers: inserted.answers as {} },
+    }
   })
 
 export const listFormResponsesFn = createServerFn({ method: "GET" })
   .inputValidator((data: { surveyFormId: string }) => {
-    if (typeof data?.surveyFormId !== "string" || !data.surveyFormId.trim()) {
+    if (typeof data.surveyFormId !== "string" || !data.surveyFormId.trim()) {
       throw new Error("surveyFormId is required")
     }
     return { surveyFormId: data.surveyFormId.trim() }
@@ -76,12 +79,15 @@ export const listFormResponsesFn = createServerFn({ method: "GET" })
         errors: ["Form not found or you do not have access"],
       }
     }
-    return { ok: true as const, responses: rows }
+    return {
+      ok: true as const,
+      responses: rows.map((r) => ({ ...r, answers: r.answers as {} })),
+    }
   })
 
 export const deleteFormResponseFn = createServerFn({ method: "POST" })
   .inputValidator((data: { responseId: string }) => {
-    if (typeof data?.responseId !== "string" || !data.responseId.trim()) {
+    if (typeof data.responseId !== "string" || !data.responseId.trim()) {
       throw new Error("responseId is required")
     }
     return { responseId: data.responseId.trim() }
@@ -97,5 +103,8 @@ export const deleteFormResponseFn = createServerFn({ method: "POST" })
         errors: ["Response not found or you do not have access"],
       }
     }
-    return { ok: true as const, response: row }
+    return {
+      ok: true as const,
+      response: { ...row, answers: row.answers as {} },
+    }
   })

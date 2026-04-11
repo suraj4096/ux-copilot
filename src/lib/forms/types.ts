@@ -36,12 +36,12 @@ export type NumberQuestion = BaseQuestion & {
 
 export type SingleChoiceQuestion = BaseQuestion & {
   type: "single_choice"
-  options: FormChoiceOption[]
+  options: Array<FormChoiceOption>
 }
 
 export type MultiChoiceQuestion = BaseQuestion & {
   type: "multi_choice"
-  options: FormChoiceOption[]
+  options: Array<FormChoiceOption>
 }
 
 export type FormQuestion =
@@ -55,15 +55,15 @@ export type FormSchema = {
   id: string
   title: string
   description?: string
-  questions: FormQuestion[]
+  questions: Array<FormQuestion>
 }
 
-export type FormAnswerValue = string | number | string[] | null
+export type FormAnswerValue = string | number | Array<string> | null
 
 export type FormAnswersByQuestionId = Record<string, FormAnswerValue>
 
 export type FormResponseAnswer = {
   question_id: string
-  value: string | number | string[]
+  value: string | number | Array<string>
 }
 

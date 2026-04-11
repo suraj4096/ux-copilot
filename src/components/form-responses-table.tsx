@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react"
 
+import type { FormSchema } from "@/lib/forms/types"
+import type {ResponseTableRow} from "@/lib/forms/response-display";
 import { FormResponseViewDialog } from "@/components/form-response-view-dialog"
 import { questionColumnPreset } from "@/components/form-responses-presentation"
 import { Button } from "@/components/ui/button"
@@ -20,10 +22,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import {
-  buildResponseTableRows,
-  type ResponseTableRow,
+  
+  buildResponseTableRows
 } from "@/lib/forms/response-display"
-import type { FormSchema } from "@/lib/forms/types"
 import { cn } from "@/lib/utils"
 
 const submittedStickyRightClass = "right-32"
@@ -67,7 +68,7 @@ export function FormResponsesTable({
         <TableHeader>
           <TableRow>
             {form.questions.map((q, i) => {
-              const { widthClass, typeLabel, Icon } = presets[i]!
+              const { widthClass, typeLabel, Icon } = presets[i]
               return (
                 <TableHead
                   key={q.id}
@@ -148,7 +149,7 @@ export function FormResponsesTable({
                 <TableCell
                   key={cell.questionId}
                   className={cn(
-                    presets[i]!.cellWidthClass,
+                    presets[i].cellWidthClass,
                     "align-top whitespace-normal",
                   )}
                 >

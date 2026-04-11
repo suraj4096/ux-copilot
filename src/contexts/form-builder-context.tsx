@@ -2,14 +2,14 @@
 
 import * as React from "react"
 import {
+  
   useForm,
-  useStore,
-  type ReactFormExtendedApi,
+  useStore
 } from "@tanstack/react-form"
+import type {ReactFormExtendedApi} from "@tanstack/react-form";
 
-import type { BuilderFormValues } from "@/lib/forms/builder-types"
-import { createEmptyForm, createQuestion } from "@/lib/forms/defaults"
 import type { FormQuestionType, FormSchema } from "@/lib/forms/types"
+import { createEmptyForm, createQuestion } from "@/lib/forms/defaults"
 
 type FormBuilderActions = {
   reset: () => void
@@ -18,12 +18,12 @@ type FormBuilderActions = {
   moveQuestion: (fromIndex: number, toIndex: number) => void
   removeQuestionAtIndex: (index: number) => void
   removeQuestionById: (questionId: string) => void
-  setQuestions: (next: BuilderFormValues["questions"]) => void
+  setQuestions: (next: FormSchema["questions"]) => void
 }
 
 type FormBuilderContextValue = {
   formApi: ReactFormExtendedApi<
-    BuilderFormValues,
+    FormSchema,
     any,
     any,
     any,
@@ -36,7 +36,7 @@ type FormBuilderContextValue = {
     any,
     any
   >
-  values: BuilderFormValues
+  values: FormSchema
   actions: FormBuilderActions
 }
 
@@ -57,7 +57,7 @@ export function FormBuilderProvider({
   }, [initialForm])
 
   const formApi = useForm<
-    BuilderFormValues,
+    FormSchema,
     any,
     any,
     any,
@@ -77,7 +77,7 @@ export function FormBuilderProvider({
   const values = useStore(formApi.store, (state) => state.values)
 
   const setQuestions = React.useCallback(
-    (next: BuilderFormValues["questions"]) => {
+    (next: FormSchema["questions"]) => {
       ;(formApi as any).setFieldValue("questions", () => next)
     },
     [formApi]
@@ -96,7 +96,7 @@ export function FormBuilderProvider({
 
   const insertQuestion = React.useCallback(
     (index: number, type: FormQuestionType) => {
-      ;(formApi as any).setFieldValue("questions", (prev: any[]) => {
+      ;(formApi as any).setFieldValue("questions", (prev: Array<any>) => {
         const list = Array.isArray(prev) ? prev : []
         return [
           ...list.slice(0, index),
@@ -111,7 +111,7 @@ export function FormBuilderProvider({
   const moveQuestion = React.useCallback(
     (fromIndex: number, toIndex: number) => {
       if (fromIndex === toIndex) return
-      ;(formApi as any).setFieldValue("questions", (prev: any[]) => {
+      ;(formApi as any).setFieldValue("questions", (prev: Array<any>) => {
         const list = Array.isArray(prev) ? [...prev] : []
         const [moved] = list.splice(fromIndex, 1)
         list.splice(toIndex, 0, moved)
@@ -123,7 +123,7 @@ export function FormBuilderProvider({
 
   const removeQuestionAtIndex = React.useCallback(
     (index: number) => {
-      ;(formApi as any).setFieldValue("questions", (prev: any[]) =>
+      ;(formApi as any).setFieldValue("questions", (prev: Array<any>) =>
         Array.isArray(prev) ? prev.filter((_, i) => i !== index) : prev
       )
     },
@@ -132,7 +132,7 @@ export function FormBuilderProvider({
 
   const removeQuestionById = React.useCallback(
     (questionId: string) => {
-      ;(formApi as any).setFieldValue("questions", (prev: any[]) =>
+      ;(formApi as any).setFieldValue("questions", (prev: Array<any>) =>
         Array.isArray(prev) ? prev.filter((q) => q?.id !== questionId) : prev
       )
     },

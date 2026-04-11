@@ -5,34 +5,18 @@ import { Link } from "@tanstack/react-router"
 import { useServerFn } from "@tanstack/react-start"
 import { LayoutGrid, Table2 } from "lucide-react"
 
+import type {FormResponsesPageQueryData} from "@/lib/query-options";
 import { FormResponsesCards } from "@/components/form-responses-cards"
 import { FormResponsesTable } from "@/components/form-responses-table"
 import { buttonVariants } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { deleteFormResponseFn } from "@/lib/data.functions"
-import { formResponsesPageQueryOptions } from "@/lib/query-options"
+import {
+  
+  formResponsesPageQueryOptions
+} from "@/lib/query-options"
 import { cn } from "@/lib/utils"
-
-type FormOk = {
-  ok: true
-  form: import("@/lib/forms/types").FormSchema
-  surveyId: string
-}
-
-type FormFail = { ok: false; errors: string[] }
-
-type ResponsesOk = {
-  ok: true
-  responses: Array<{
-    id: string
-    surveyFormId: string
-    submittedAt: Date | string
-    answers: unknown
-  }>
-}
-
-type ResponsesFail = { ok: false; errors: string[] }
 
 export function FormResponsesView({
   surveyId,
@@ -41,17 +25,16 @@ export function FormResponsesView({
 }: {
   surveyId: string
   formId: string
-  data: {
-    formRes: FormOk | FormFail
-    responsesRes: ResponsesOk | ResponsesFail
-  }
+  data: FormResponsesPageQueryData
 }) {
   const queryClient = useQueryClient()
   const deleteResponse = useServerFn(deleteFormResponseFn)
 
   const deleteResponseMutation = useMutation({
     mutationFn: async (responseId: string) => {
-      const res = await deleteResponse({ data: { responseId } })
+      const res = (await deleteResponse({
+        data: { responseId },
+      })) as { ok: false; errors: Array<string> } | { ok: true }
       if (!res.ok) throw new Error(res.errors.join(" "))
       return res
     },
@@ -88,10 +71,9 @@ export function FormResponsesView({
 
   const form = data.formRes.form
   const responses = data.responsesRes.responses
-  const deletePendingId =
-    deleteResponseMutation.isPending
-      ? deleteResponseMutation.variables ?? null
-      : null
+  const deletePendingId = deleteResponseMutation.isPending
+    ? deleteResponseMutation.variables
+    : null
 
   return (
     <div className="space-y-6">

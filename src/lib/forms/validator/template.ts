@@ -5,13 +5,14 @@ import type {
   FormSchema,
 } from "@/lib/forms/types"
 
+import type {ValidationResult} from "@/lib/forms/validator/result";
 import {
+  
   validationFailure,
-  validationOk,
-  type ValidationResult,
+  validationOk
 } from "@/lib/forms/validator/result"
 
-const QUESTION_TYPES: FormQuestionType[] = [
+const QUESTION_TYPES: Array<FormQuestionType> = [
   "short_text",
   "long_text",
   "number",
@@ -24,20 +25,20 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 }
 
 function isQuestionType(v: unknown): v is FormQuestionType {
-  return typeof v === "string" && (QUESTION_TYPES as string[]).includes(v)
+  return typeof v === "string" && (QUESTION_TYPES as Array<string>).includes(v)
 }
 
 function parseOptions(
   raw: unknown,
   path: string,
-): { ok: true; options: FormChoiceOption[] } | { ok: false; errors: string[] } {
+): { ok: true; options: Array<FormChoiceOption> } | { ok: false; errors: Array<string> } {
   if (!Array.isArray(raw)) {
     return { ok: false, errors: [`${path} must be an array.`] }
   }
   if (raw.length < 1) {
     return { ok: false, errors: [`${path} must have at least one option.`] }
   }
-  const options: FormChoiceOption[] = []
+  const options: Array<FormChoiceOption> = []
   const values = new Set<string>()
   for (let i = 0; i < raw.length; i++) {
     const item = raw[i]
@@ -64,7 +65,7 @@ function parseOptions(
 function parseOptionalNumber(
   raw: unknown,
   path: string,
-): { ok: true; n: number | undefined } | { ok: false; errors: string[] } {
+): { ok: true; n: number | undefined } | { ok: false; errors: Array<string> } {
   if (raw === undefined) return { ok: true, n: undefined }
   if (typeof raw !== "number" || !Number.isFinite(raw)) {
     return { ok: false, errors: [`${path} must be a finite number when provided.`] }
@@ -152,7 +153,7 @@ function parseFormQuestion(raw: unknown, index: number): ValidationResult<FormQu
 
 export type StoredFormTemplate = {
   id?: string
-  questions: FormQuestion[]
+  questions: Array<FormQuestion>
 }
 
 export function validateStoredFormTemplate(
@@ -162,7 +163,7 @@ export function validateStoredFormTemplate(
     return validationFailure(["Template must be an object."])
   }
 
-  const errors: string[] = []
+  const errors: Array<string> = []
   let id: string | undefined
 
   if (input.id !== undefined) {
@@ -177,7 +178,7 @@ export function validateStoredFormTemplate(
     return validationFailure(["Template.questions must be an array."])
   }
 
-  const questions: FormQuestion[] = []
+  const questions: Array<FormQuestion> = []
   for (let i = 0; i < input.questions.length; i++) {
     const parsed = parseFormQuestion(input.questions[i], i)
     if (!parsed.ok) {

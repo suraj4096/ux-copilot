@@ -64,7 +64,7 @@ export function AgentPanel() {
         pathname: s.location.pathname,
         search: s.location.search,
         href: s.location.href,
-        routeId: leaf?.routeId ?? leaf?.id ?? "—",
+        routeId: leaf?.routeId ?? "—",
         params: (leaf?.params ?? {}) as Record<string, unknown>,
       }
     },

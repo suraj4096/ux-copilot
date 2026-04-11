@@ -26,7 +26,7 @@ function parseCookieHeader(cookieHeader: string | null): Record<string, string> 
   for (const part of cookieHeader.split(";")) {
     const [rawName, ...rawValue] = part.trim().split("=")
     if (!rawName) continue
-    out[rawName] = decodeURIComponent(rawValue.join("=") ?? "")
+    out[rawName] = decodeURIComponent(rawValue.join("="))
   }
   return out
 }
@@ -79,7 +79,7 @@ function clearAuthCookie() {
   )
 }
 
-export async function createAuthToken(email: string) {
+async function createAuthToken(email: string) {
   const secret = getJwtSecret()
   const nowSeconds = Math.floor(Date.now() / 1000)
   const exp = nowSeconds + sevenDaysSeconds
@@ -91,14 +91,14 @@ export async function createAuthToken(email: string) {
     .sign(secret)
 }
 
-export async function readAuthTokenFromCookie() {
+function readAuthTokenFromCookie(): string | null {
   const request = getRequest()
   const cookies = parseCookieHeader(request.headers.get("cookie"))
   return cookies[cookieName] ?? null
 }
 
 export async function getUserFromAuthCookie() {
-  const token = await readAuthTokenFromCookie()
+  const token = readAuthTokenFromCookie()
   if (!token) return null
 
   let payload: JwtPayload
@@ -111,7 +111,7 @@ export async function getUserFromAuthCookie() {
     return null
   }
 
-  if (!payload?.email) return null
+  if (!payload.email) return null
   const user = await getUserByEmail(payload.email)
   if (!user) return null
 
@@ -127,7 +127,7 @@ export async function loginWithEmail(email: string) {
   return { ok: true as const, user: { email: user.email } }
 }
 
-export async function logout() {
+export function logout() {
   clearAuthCookie()
   return { ok: true as const }
 }

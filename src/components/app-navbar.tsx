@@ -19,7 +19,7 @@ export function AppNavbar() {
     try {
       await logoutFn()
       await refetch()
-      await navigate({ to: "/login" })
+      await navigate({ to: "/login", search: { redirect: "/" } })
     } finally {
       setIsSigningOut(false)
     }
@@ -50,7 +50,11 @@ export function AppNavbar() {
           </Button>
         </div>
       ) : (
-        <Link to="/login" className="text-sm text-muted-foreground">
+        <Link
+          to="/login"
+          search={{ redirect: "/" }}
+          className="text-sm text-muted-foreground"
+        >
           Sign in
         </Link>
       )}

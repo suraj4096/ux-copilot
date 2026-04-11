@@ -3,9 +3,10 @@ import {
   CircleDot,
   Hash,
   ListChecks,
-  type LucideIcon,
-  TextCursor,
+  
+  TextCursor
 } from "lucide-react"
+import type {LucideIcon} from "lucide-react";
 
 import type { FormQuestion } from "@/lib/forms/types"
 

@@ -1,5 +1,5 @@
 import { useSuspenseQuery } from "@tanstack/react-query"
-import { createFileRoute, Link } from "@tanstack/react-router"
+import { Link, createFileRoute } from "@tanstack/react-router"
 
 import { AppShell } from "@/components/app-shell"
 import { NewSurveyDialog } from "@/components/new-survey-dialog"
