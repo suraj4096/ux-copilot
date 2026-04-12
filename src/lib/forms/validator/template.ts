@@ -1,155 +1,140 @@
-import type {
-  FormChoiceOption,
-  FormQuestion,
-  FormQuestionType,
-  FormSchema,
-} from "@/lib/forms/types"
+import { z } from "zod"
 
-import type {ValidationResult} from "@/lib/forms/validator/result";
-import {
-  
-  validationFailure,
-  validationOk
-} from "@/lib/forms/validator/result"
+import type { FormQuestion, FormSchema } from "@/lib/forms/types"
+import type { ValidationResult } from "@/lib/forms/validator/result"
+import { nonEmptyTrimmedString } from "@/lib/forms/validator/form-zod-shared"
+import { zodSafeParseToResult } from "@/lib/forms/validator/zod-to-result"
 
-const QUESTION_TYPES: Array<FormQuestionType> = [
-  "short_text",
-  "long_text",
-  "number",
-  "single_choice",
-  "multi_choice",
-]
+const formChoiceOptionSchema = z.object({
+  value: nonEmptyTrimmedString,
+  label: nonEmptyTrimmedString,
+})
 
-function isRecord(v: unknown): v is Record<string, unknown> {
-  return typeof v === "object" && v !== null && !Array.isArray(v)
-}
-
-function isQuestionType(v: unknown): v is FormQuestionType {
-  return typeof v === "string" && (QUESTION_TYPES as Array<string>).includes(v)
-}
-
-function parseOptions(
-  raw: unknown,
-  path: string,
-): { ok: true; options: Array<FormChoiceOption> } | { ok: false; errors: Array<string> } {
-  if (!Array.isArray(raw)) {
-    return { ok: false, errors: [`${path} must be an array.`] }
-  }
-  if (raw.length < 1) {
-    return { ok: false, errors: [`${path} must have at least one option.`] }
-  }
-  const options: Array<FormChoiceOption> = []
-  const values = new Set<string>()
-  for (let i = 0; i < raw.length; i++) {
-    const item = raw[i]
-    const p = `${path}[${i}]`
-    if (!isRecord(item)) {
-      return { ok: false, errors: [`${p} must be an object.`] }
-    }
-    if (typeof item.value !== "string" || !item.value.trim()) {
-      return { ok: false, errors: [`${p}.value must be a non-empty string.`] }
-    }
-    if (typeof item.label !== "string" || !item.label.trim()) {
-      return { ok: false, errors: [`${p}.label must be a non-empty string.`] }
-    }
-    const value = item.value.trim()
-    if (values.has(value)) {
-      return { ok: false, errors: [`${path} has duplicate option value "${value}".`] }
-    }
-    values.add(value)
-    options.push({ value, label: item.label.trim() })
-  }
-  return { ok: true, options }
-}
-
-function parseOptionalNumber(
-  raw: unknown,
-  path: string,
-): { ok: true; n: number | undefined } | { ok: false; errors: Array<string> } {
-  if (raw === undefined) return { ok: true, n: undefined }
-  if (typeof raw !== "number" || !Number.isFinite(raw)) {
-    return { ok: false, errors: [`${path} must be a finite number when provided.`] }
-  }
-  return { ok: true, n: raw }
-}
-
-function parseFormQuestion(raw: unknown, index: number): ValidationResult<FormQuestion> {
-  const path = `questions[${index}]`
-  if (!isRecord(raw)) {
-    return validationFailure([`${path} must be an object.`])
-  }
-
-  if (typeof raw.id !== "string" || !raw.id.trim()) {
-    return validationFailure([`${path}.id must be a non-empty string.`])
-  }
-  const id = raw.id.trim()
-
-  if (!isQuestionType(raw.type)) {
-    return validationFailure([
-      `${path}.type must be one of: ${QUESTION_TYPES.join(", ")}.`,
-    ])
-  }
-  const type = raw.type
-
-  if (typeof raw.label !== "string" || !raw.label.trim()) {
-    return validationFailure([`${path}.label must be a non-empty string.`])
-  }
-  const label = raw.label.trim()
-
-  if (typeof raw.required !== "boolean") {
-    return validationFailure([`${path}.required must be a boolean.`])
-  }
-  const required = raw.required
-
-  const base = { id, type, label, required } as const
-
-  switch (type) {
-    case "short_text":
-    case "long_text": {
-      let placeholder: string | undefined
-      if (raw.placeholder !== undefined) {
-        if (typeof raw.placeholder !== "string") {
-          return validationFailure([`${path}.placeholder must be a string when provided.`])
-        }
-        placeholder = raw.placeholder
+const choiceOptionsSchema = z
+  .array(formChoiceOptionSchema)
+  .min(1, "Must have at least one option.")
+  .superRefine((options, ctx) => {
+    const seen = new Set<string>()
+    for (let i = 0; i < options.length; i++) {
+      const v = options[i].value
+      if (seen.has(v)) {
+        ctx.addIssue({
+          code: "custom",
+          message: `Has duplicate option value "${v}".`,
+          path: [i, "value"],
+        })
       }
-      return validationOk(
-        type === "short_text"
-          ? { ...base, type: "short_text", placeholder }
-          : { ...base, type: "long_text", placeholder },
-      )
+      seen.add(v)
     }
-    case "number": {
-      let placeholder: string | undefined
-      if (raw.placeholder !== undefined) {
-        if (typeof raw.placeholder !== "string") {
-          return validationFailure([`${path}.placeholder must be a string when provided.`])
-        }
-        placeholder = raw.placeholder
-      }
-      const minR = parseOptionalNumber(raw.min, `${path}.min`)
-      if (!minR.ok) return validationFailure(minR.errors)
-      const maxR = parseOptionalNumber(raw.max, `${path}.max`)
-      if (!maxR.ok) return validationFailure(maxR.errors)
-      const min = minR.n
-      const max = maxR.n
-      if (min !== undefined && max !== undefined && min > max) {
-        return validationFailure([`${path}.min must be less than or equal to max.`])
-      }
-      return validationOk({ ...base, type: "number", placeholder, min, max })
+  })
+
+const shortTextQuestionSchema = z.object({
+  id: nonEmptyTrimmedString,
+  type: z.literal("short_text"),
+  label: nonEmptyTrimmedString,
+  required: z.boolean(),
+  placeholder: z.string().optional(),
+})
+
+const longTextQuestionSchema = z.object({
+  id: nonEmptyTrimmedString,
+  type: z.literal("long_text"),
+  label: nonEmptyTrimmedString,
+  required: z.boolean(),
+  placeholder: z.string().optional(),
+})
+
+const numberQuestionSchema = z
+  .object({
+    id: nonEmptyTrimmedString,
+    type: z.literal("number"),
+    label: nonEmptyTrimmedString,
+    required: z.boolean(),
+    placeholder: z.string().optional(),
+    min: z.number().finite().optional(),
+    max: z.number().finite().optional(),
+  })
+  .superRefine((q, ctx) => {
+    if (q.min !== undefined && q.max !== undefined && q.min > q.max) {
+      ctx.addIssue({
+        code: "custom",
+        message: "min must be less than or equal to max.",
+        path: ["min"],
+      })
     }
-    case "single_choice":
-    case "multi_choice": {
-      const opt = parseOptions(raw.options, `${path}.options`)
-      if (!opt.ok) return validationFailure(opt.errors)
-      return validationOk(
-        type === "single_choice"
-          ? { ...base, type: "single_choice", options: opt.options }
-          : { ...base, type: "multi_choice", options: opt.options },
-      )
+  })
+
+const singleChoiceQuestionSchema = z.object({
+  id: nonEmptyTrimmedString,
+  type: z.literal("single_choice"),
+  label: nonEmptyTrimmedString,
+  required: z.boolean(),
+  options: choiceOptionsSchema,
+})
+
+const multiChoiceQuestionSchema = z.object({
+  id: nonEmptyTrimmedString,
+  type: z.literal("multi_choice"),
+  label: nonEmptyTrimmedString,
+  required: z.boolean(),
+  options: choiceOptionsSchema,
+})
+
+const formQuestionSchema = z.discriminatedUnion("type", [
+  shortTextQuestionSchema,
+  longTextQuestionSchema,
+  numberQuestionSchema,
+  singleChoiceQuestionSchema,
+  multiChoiceQuestionSchema,
+])
+
+const storedFormTemplateSchema = z
+  .object({
+    id: nonEmptyTrimmedString.optional(),
+    questions: z.array(formQuestionSchema),
+  })
+  .superRefine((t, ctx) => {
+    const ids = t.questions.map((q) => q.id)
+    if (new Set(ids).size !== ids.length) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Question ids must be unique within the template.",
+        path: ["questions"],
+      })
     }
-  }
-}
+  })
+
+const formSchemaSchema = z
+  .object({
+    id: nonEmptyTrimmedString,
+    title: nonEmptyTrimmedString,
+    description: z.string().optional(),
+    questions: z.array(formQuestionSchema),
+  })
+  .superRefine((f, ctx) => {
+    const ids = f.questions.map((q) => q.id)
+    if (new Set(ids).size !== ids.length) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Question ids must be unique within the template.",
+        path: ["questions"],
+      })
+    }
+    if (f.questions.length < 1) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Add at least one question.",
+        path: ["questions"],
+      })
+    }
+    if (f.questions.length > 0 && !f.questions.some((q) => q.required)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "At least one question must be marked required.",
+        path: ["questions"],
+      })
+    }
+  })
 
 export type StoredFormTemplate = {
   id?: string
@@ -159,83 +144,9 @@ export type StoredFormTemplate = {
 export function validateStoredFormTemplate(
   input: unknown,
 ): ValidationResult<StoredFormTemplate> {
-  if (!isRecord(input)) {
-    return validationFailure(["Template must be an object."])
-  }
-
-  const errors: Array<string> = []
-  let id: string | undefined
-
-  if (input.id !== undefined) {
-    if (typeof input.id !== "string" || !input.id.trim()) {
-      errors.push("Template.id must be a non-empty string when provided.")
-    } else {
-      id = input.id.trim()
-    }
-  }
-
-  if (!Array.isArray(input.questions)) {
-    return validationFailure(["Template.questions must be an array."])
-  }
-
-  const questions: Array<FormQuestion> = []
-  for (let i = 0; i < input.questions.length; i++) {
-    const parsed = parseFormQuestion(input.questions[i], i)
-    if (!parsed.ok) {
-      errors.push(...parsed.errors)
-    } else {
-      questions.push(parsed.value)
-    }
-  }
-
-  const ids = questions.map((q) => q.id)
-  const unique = new Set(ids)
-  if (unique.size !== ids.length) {
-    errors.push("Question ids must be unique within the template.")
-  }
-
-  if (errors.length > 0) {
-    return validationFailure(errors)
-  }
-
-  return validationOk({ id, questions })
+  return zodSafeParseToResult(storedFormTemplateSchema, input)
 }
 
 export function validateFormSchema(input: unknown): ValidationResult<FormSchema> {
-  if (!isRecord(input)) {
-    return validationFailure(["Form must be an object."])
-  }
-
-  if (typeof input.id !== "string" || !input.id.trim()) {
-    return validationFailure(["Form.id must be a non-empty string."])
-  }
-  const id = input.id.trim()
-
-  if (typeof input.title !== "string" || !input.title.trim()) {
-    return validationFailure(["Form.title must be a non-empty string."])
-  }
-  const title = input.title.trim()
-
-  let description: string | undefined
-  if (input.description !== undefined) {
-    if (typeof input.description !== "string") {
-      return validationFailure(["Form.description must be a string when provided."])
-    }
-    description = input.description
-  }
-
-  const template = validateStoredFormTemplate({
-    id,
-    questions: input.questions,
-  })
-  if (!template.ok) {
-    return validationFailure(template.errors)
-  }
-
-  return validationOk({
-    id,
-    title,
-    description,
-    questions: template.value.questions,
-  })
+  return zodSafeParseToResult(formSchemaSchema, input)
 }

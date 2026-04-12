@@ -2,11 +2,16 @@ import { createServerFn } from "@tanstack/react-start"
 
 import { getUserFromAuthCookie } from "@/lib/auth.server"
 import {
+  createSurveyFormInputSchema,
+  formIdParamSchema,
+  listSurveyFormsPagedInputSchema,
+} from "@/lib/server-input-schemas"
+import {
   createSurveyForm,
   deleteSurveyForm,
   getSurveyFormById,
   getSurveyFormForOwner,
-  listSurveyFormsBySurveyId,
+  listSurveyFormsForSurveyPage,
 } from "@/lib/db/queries"
 import {
   parseBuilderPayloadForWrite,
@@ -18,12 +23,7 @@ function requireUser() {
 }
 
 export const getSurveyFormPublicFn = createServerFn({ method: "GET" })
-  .inputValidator((data: { formId: string }) => {
-    if (typeof data.formId !== "string" || !data.formId.trim()) {
-      throw new Error("formId is required")
-    }
-    return { formId: data.formId.trim() }
-  })
+  .inputValidator((data: unknown) => formIdParamSchema.parse(data))
   .handler(async ({ data }) => {
     const row = await getSurveyFormById(data.formId)
     if (!row) {
@@ -44,12 +44,7 @@ export const getSurveyFormPublicFn = createServerFn({ method: "GET" })
   })
 
 export const getSurveyFormForOwnerFn = createServerFn({ method: "GET" })
-  .inputValidator((data: { formId: string }) => {
-    if (typeof data.formId !== "string" || !data.formId.trim()) {
-      throw new Error("formId is required")
-    }
-    return { formId: data.formId.trim() }
-  })
+  .inputValidator((data: unknown) => formIdParamSchema.parse(data))
   .handler(async ({ data }) => {
     const user = await requireUser()
     if (!user) return { ok: false as const, errors: ["Unauthorized"] }
@@ -80,33 +75,28 @@ export const getSurveyFormForOwnerFn = createServerFn({ method: "GET" })
   })
 
 export const listSurveyFormsFn = createServerFn({ method: "GET" })
-  .inputValidator((data: { surveyId: string }) => {
-    if (typeof data.surveyId !== "string" || !data.surveyId.trim()) {
-      throw new Error("surveyId is required")
-    }
-    return { surveyId: data.surveyId.trim() }
-  })
+  .inputValidator((data: unknown) => listSurveyFormsPagedInputSchema.parse(data))
   .handler(async ({ data }) => {
     const user = await requireUser()
     if (!user) return { ok: false as const, errors: ["Unauthorized"] }
 
-    const forms = await listSurveyFormsBySurveyId(user.email, data.surveyId)
-    if (forms === null) {
+    const { surveyId, ...page } = data
+    const result = await listSurveyFormsForSurveyPage(
+      user.email,
+      surveyId,
+      page,
+    )
+    if (result === null) {
       return {
         ok: false as const,
         errors: ["Survey not found or you do not have access"],
       }
     }
-    return { ok: true as const, forms }
+    return { ok: true as const, forms: result.items, total: result.total }
   })
 
 export const createSurveyFormFn = createServerFn({ method: "POST" })
-  .inputValidator((data: { surveyId: string; payload: unknown }) => {
-    if (typeof data.surveyId !== "string" || !data.surveyId.trim()) {
-      throw new Error("surveyId is required")
-    }
-    return { surveyId: data.surveyId.trim(), payload: data.payload }
-  })
+  .inputValidator((data: unknown) => createSurveyFormInputSchema.parse(data))
   .handler(async ({ data }) => {
     const user = await requireUser()
     if (!user) return { ok: false as const, errors: ["Unauthorized"] }
@@ -135,12 +125,7 @@ export const createSurveyFormFn = createServerFn({ method: "POST" })
   })
 
 export const deleteSurveyFormFn = createServerFn({ method: "POST" })
-  .inputValidator((data: { formId: string }) => {
-    if (typeof data.formId !== "string" || !data.formId.trim()) {
-      throw new Error("formId is required")
-    }
-    return { formId: data.formId.trim() }
-  })
+  .inputValidator((data: unknown) => formIdParamSchema.parse(data))
   .handler(async ({ data }) => {
     const user = await requireUser()
     if (!user) return { ok: false as const, errors: ["Unauthorized"] }

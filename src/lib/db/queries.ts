@@ -1,6 +1,13 @@
-import { and, asc, desc, eq, ilike } from "drizzle-orm"
+import { and, asc, count, desc, eq, ilike, or, sql } from "drizzle-orm"
 
+import type {ListPageParams, ListPageResult} from "@/lib/db/list-query-shared";
 import { db } from "@/lib/db/client"
+import {
+  
+  
+  normalizeListPageParams,
+  searchPattern
+} from "@/lib/db/list-query-shared"
 import {
   formResponse,
   survey,
@@ -33,11 +40,31 @@ export async function deleteSurvey(ownerEmail: string, surveyId: string) {
   return rows.at(0) ?? null
 }
 
-export async function listSurveysByOwner(ownerEmail: string) {
-  return db
+export async function listSurveysForOwnerPage(
+  ownerEmail: string,
+  page: Partial<ListPageParams> | undefined,
+): Promise<ListPageResult<(typeof survey.$inferSelect)>> {
+  const { offset, limit, search } = normalizeListPageParams(page)
+  const ownerCond = eq(survey.owner, ownerEmail)
+  const searchCond =
+    search !== undefined ? ilike(survey.title, searchPattern(search)) : undefined
+  const whereClause = searchCond ? and(ownerCond, searchCond) : ownerCond
+
+  const countRows = await db
+    .select({ c: count() })
+    .from(survey)
+    .where(whereClause)
+  const total = Number(countRows.at(0)?.c ?? 0)
+
+  const items = await db
     .select()
     .from(survey)
-    .where(eq(survey.owner, ownerEmail))
+    .where(whereClause)
+    .orderBy(asc(survey.title), asc(survey.id))
+    .limit(limit)
+    .offset(offset)
+
+  return { items, total }
 }
 
 export async function getSurveyForOwner(ownerEmail: string, surveyId: string) {
@@ -49,10 +76,18 @@ export async function getSurveyForOwner(ownerEmail: string, surveyId: string) {
   return rows.at(0) ?? null
 }
 
-export async function listSurveyFormsBySurveyId(
+export type SurveyFormListRow = {
+  id: string
+  surveyId: string
+  title: string
+  description: string | null
+}
+
+export async function listSurveyFormsForSurveyPage(
   ownerEmail: string,
   surveyId: string,
-) {
+  page: Partial<ListPageParams> | undefined,
+): Promise<ListPageResult<SurveyFormListRow> | null> {
   const ownershipRows = await db
     .select({ id: survey.id })
     .from(survey)
@@ -60,7 +95,25 @@ export async function listSurveyFormsBySurveyId(
     .limit(1)
   if (ownershipRows.at(0) === undefined) return null
 
-  return db
+  const { offset, limit, search } = normalizeListPageParams(page)
+  const baseCond = eq(surveyForm.surveyId, surveyId)
+  const searchCond =
+    search !== undefined
+      ? or(
+          ilike(surveyForm.title, searchPattern(search)),
+          sql`coalesce(${surveyForm.description}, '') ilike ${searchPattern(search)}`,
+          sql`cast(${surveyForm.template} as text) ilike ${searchPattern(search)}`,
+        )
+      : undefined
+  const whereClause = searchCond ? and(baseCond, searchCond) : baseCond
+
+  const countRows = await db
+    .select({ c: count() })
+    .from(surveyForm)
+    .where(whereClause)
+  const total = Number(countRows.at(0)?.c ?? 0)
+
+  const items = await db
     .select({
       id: surveyForm.id,
       surveyId: surveyForm.surveyId,
@@ -68,8 +121,64 @@ export async function listSurveyFormsBySurveyId(
       description: surveyForm.description,
     })
     .from(surveyForm)
-    .where(eq(surveyForm.surveyId, surveyId))
-    .orderBy(asc(surveyForm.title))
+    .where(whereClause)
+    .orderBy(asc(surveyForm.title), asc(surveyForm.id))
+    .limit(limit)
+    .offset(offset)
+
+  return { items, total }
+}
+
+export type SurveyFormWithSurveyTitle = SurveyFormListRow & {
+  surveyTitle: string
+}
+
+export async function listSurveyFormsForOwnerPage(
+  ownerEmail: string,
+  options: { surveyId?: string } & Partial<ListPageParams> | undefined,
+): Promise<ListPageResult<SurveyFormWithSurveyTitle>> {
+  const surveyId = options?.surveyId
+  const { offset, limit, search } = normalizeListPageParams(options)
+  const ownerCond = eq(survey.owner, ownerEmail)
+  const surveyScope =
+    surveyId !== undefined ? eq(surveyForm.surveyId, surveyId) : undefined
+  const searchCond =
+    search !== undefined
+      ? or(
+          ilike(surveyForm.title, searchPattern(search)),
+          sql`coalesce(${surveyForm.description}, '') ilike ${searchPattern(search)}`,
+          sql`cast(${surveyForm.template} as text) ilike ${searchPattern(search)}`,
+          ilike(survey.title, searchPattern(search)),
+        )
+      : undefined
+  const parts = [ownerCond, surveyScope, searchCond].filter(
+    (x): x is NonNullable<typeof x> => x !== undefined,
+  )
+  const whereClause = parts.length === 1 ? parts[0] : and(...parts)
+
+  const countRows = await db
+    .select({ c: count() })
+    .from(surveyForm)
+    .innerJoin(survey, eq(surveyForm.surveyId, survey.id))
+    .where(whereClause)
+  const total = Number(countRows.at(0)?.c ?? 0)
+
+  const items = await db
+    .select({
+      id: surveyForm.id,
+      surveyId: surveyForm.surveyId,
+      title: surveyForm.title,
+      description: surveyForm.description,
+      surveyTitle: survey.title,
+    })
+    .from(surveyForm)
+    .innerJoin(survey, eq(surveyForm.surveyId, survey.id))
+    .where(whereClause)
+    .orderBy(asc(survey.title), asc(surveyForm.title), asc(surveyForm.id))
+    .limit(limit)
+    .offset(offset)
+
+  return { items, total }
 }
 
 export async function getSurveyFormById(formId: string) {
@@ -161,10 +270,11 @@ export async function createFormResponse(input: {
   return rows.at(0) ?? null
 }
 
-export async function listFormResponsesByFormId(
+export async function listFormResponsesForFormPage(
   ownerEmail: string,
   surveyFormId: string,
-) {
+  page: Partial<ListPageParams> | undefined,
+): Promise<ListPageResult<(typeof formResponse.$inferSelect)> | null> {
   const ownershipRows = await db
     .select({ id: surveyForm.id })
     .from(surveyForm)
@@ -173,11 +283,29 @@ export async function listFormResponsesByFormId(
     .limit(1)
   if (ownershipRows.at(0) === undefined) return null
 
-  return db
+  const { offset, limit, search } = normalizeListPageParams(page)
+  const baseCond = eq(formResponse.surveyFormId, surveyFormId)
+  const searchCond =
+    search !== undefined
+      ? sql`cast(${formResponse.answers} as text) ilike ${searchPattern(search)}`
+      : undefined
+  const whereClause = searchCond ? and(baseCond, searchCond) : baseCond
+
+  const countRows = await db
+    .select({ c: count() })
+    .from(formResponse)
+    .where(whereClause)
+  const total = Number(countRows.at(0)?.c ?? 0)
+
+  const items = await db
     .select()
     .from(formResponse)
-    .where(eq(formResponse.surveyFormId, surveyFormId))
-    .orderBy(desc(formResponse.submittedAt))
+    .where(whereClause)
+    .orderBy(desc(formResponse.submittedAt), desc(formResponse.id))
+    .limit(limit)
+    .offset(offset)
+
+  return { items, total }
 }
 
 export async function deleteFormResponse(

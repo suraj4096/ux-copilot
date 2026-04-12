@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/inter";
@@ -6,6 +7,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+    --app-navbar-height: 3.5rem;
     --font-heading: var(--font-sans);
     --font-sans: 'Inter Variable', sans-serif;
     --color-sidebar-ring: var(--sidebar-ring);
@@ -127,4 +129,27 @@
   html {
     @apply font-sans;
     }
+}
+
+@keyframes agent-tool-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+.agent-tool-name-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--muted-foreground) 0%,
+    var(--foreground) 42%,
+    var(--muted-foreground) 84%
+  );
+  background-size: 200% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: agent-tool-shimmer 2s linear infinite;
 }

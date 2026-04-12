@@ -21,10 +21,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import {
-  
-  buildResponseTableRows
-} from "@/lib/forms/response-display"
+import { buildResponseTableRows } from "@/lib/forms/response-display"
+import { copilotResponseAnchorId } from "@/lib/copilot-links"
 import { cn } from "@/lib/utils"
 
 const submittedStickyRightClass = "right-32"
@@ -33,6 +31,8 @@ export function FormResponsesTable({
   form,
   responses,
   deletePendingId,
+  highlightResponseId,
+  assignCopilotAnchorId,
   onDeleteResponse,
 }: {
   form: FormSchema
@@ -42,6 +42,8 @@ export function FormResponsesTable({
     answers: unknown
   }>
   deletePendingId: string | null
+  highlightResponseId?: string
+  assignCopilotAnchorId?: boolean
   onDeleteResponse: (responseId: string) => void
 }) {
   const rows = useMemo(
@@ -127,11 +129,13 @@ export function FormResponsesTable({
             })}
             <TableHead
               className={cn(
-                "sticky z-20 min-w-40 max-w-52 bg-background align-middle shadow-[inset_1px_0_0_hsl(var(--border))]",
+                "sticky z-20 w-21 min-w-21 max-w-21 bg-background align-middle text-xs font-medium shadow-[inset_1px_0_0_hsl(var(--border))]",
                 submittedStickyRightClass,
               )}
             >
-              Submitted
+              <span className="block truncate" title="Submitted">
+                Submitted
+              </span>
             </TableHead>
             <TableHead
               className={cn(
@@ -143,8 +147,21 @@ export function FormResponsesTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {rows.map((row) => (
-            <TableRow key={row.responseId}>
+          {rows.map((row) => {
+            const submittedLabel = formatSubmittedAt(row.submittedAt)
+            return (
+            <TableRow
+              id={
+                assignCopilotAnchorId
+                  ? copilotResponseAnchorId(row.responseId)
+                  : undefined
+              }
+              key={row.responseId}
+              className={cn(
+                highlightResponseId === row.responseId &&
+                  "bg-primary/5 ring-2 ring-inset ring-primary scroll-mt-2",
+              )}
+            >
               {row.cells.map((cell, i) => (
                 <TableCell
                   key={cell.questionId}
@@ -163,15 +180,18 @@ export function FormResponsesTable({
               ))}
               <TableCell
                 className={cn(
-                  "sticky z-20 bg-background align-top whitespace-normal shadow-[inset_1px_0_0_hsl(var(--border))]",
+                  "sticky z-20 w-21 min-w-21 max-w-21 overflow-hidden whitespace-normal bg-background align-top shadow-[inset_1px_0_0_hsl(var(--border))]",
                   submittedStickyRightClass,
                   row.payloadErrors.length > 0 &&
                     "border-l-2 border-l-destructive",
                 )}
               >
-                <div className="flex flex-col gap-1">
-                  <span className="text-muted-foreground">
-                    {formatSubmittedAt(row.submittedAt)}
+                <div className="flex min-w-0 flex-col gap-1">
+                  <span
+                    className="block truncate whitespace-nowrap text-xs tabular-nums text-muted-foreground"
+                    title={submittedLabel}
+                  >
+                    {submittedLabel}
                   </span>
                   {row.payloadErrors.length > 0 ? (
                     <span
@@ -210,7 +230,8 @@ export function FormResponsesTable({
                 </div>
               </TableCell>
             </TableRow>
-          ))}
+            )
+          })}
         </TableBody>
       </Table>
       <FormResponseViewDialog

@@ -1,22 +1,61 @@
 "use client"
 
-import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Link, useNavigate } from "@tanstack/react-router"
 import { useServerFn } from "@tanstack/react-start"
+import * as React from "react"
 
+import {
+  DebouncedSearchField,
+  OffsetPaginationBar,
+} from "@/components/offset-pagination-bar"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { deleteSurveyFn, deleteSurveyFormFn } from "@/lib/data.functions"
+import { surveyDetailQueryOptions } from "@/lib/query-options"
 import {
-  listSurveysQueryOptions,
-  surveyDetailQueryOptions,
-} from "@/lib/query-options"
+  formResponsesSearchDefaults,
+  newFormSearchDefaults,
+  surveysListSearchDefaults,
+} from "@/lib/router-search-defaults"
 import { cn } from "@/lib/utils"
 
-export function SurveyDetailView({ surveyId }: { surveyId: string }) {
-  const navigate = useNavigate()
+export function SurveyDetailView({
+  surveyId,
+  formsList,
+}: {
+  surveyId: string
+  formsList: { q?: string; offset: number; limit: number }
+}) {
+  const navigate = useNavigate({ from: "/surveys/$surveyId/" })
   const queryClient = useQueryClient()
-  const { data } = useSuspenseQuery(surveyDetailQueryOptions(surveyId))
+  const [navPending, startTransition] = React.useTransition()
+  const [deleteIntent, setDeleteIntent] = React.useState<
+    null | { type: "survey" } | { type: "form"; formId: string }
+  >(null)
+
+  const { data, isFetching } = useQuery({
+    ...surveyDetailQueryOptions(surveyId, {
+      search: formsList.q,
+      offset: formsList.offset,
+      limit: formsList.limit,
+    }),
+    placeholderData: (previousData) => previousData,
+  })
+
+  if (!data) {
+    return <p className="text-sm text-muted-foreground">Loading…</p>
+  }
 
   const deleteSurvey = useServerFn(deleteSurveyFn)
   const deleteForm = useServerFn(deleteSurveyFormFn)
@@ -30,10 +69,8 @@ export function SurveyDetailView({ surveyId }: { surveyId: string }) {
       return res
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: listSurveysQueryOptions().queryKey,
-      })
-      await navigate({ to: "/surveys" })
+      await queryClient.invalidateQueries({ queryKey: ["surveys", "list"] })
+      await navigate({ to: "/surveys", search: surveysListSearchDefaults })
     },
   })
 
@@ -47,22 +84,10 @@ export function SurveyDetailView({ surveyId }: { surveyId: string }) {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({
-        queryKey: surveyDetailQueryOptions(surveyId).queryKey,
+        queryKey: ["survey", surveyId, "detail"],
       })
     },
   })
-
-  function onDeleteSurvey() {
-    if (!window.confirm("Delete this survey and all of its forms and responses?")) {
-      return
-    }
-    deleteSurveyMutation.mutate()
-  }
-
-  function onDeleteForm(formId: string) {
-    if (!window.confirm("Delete this form and all responses?")) return
-    deleteFormMutation.mutate(formId)
-  }
 
   if (!data.surveyRes.ok) {
     return (
@@ -78,48 +103,57 @@ export function SurveyDetailView({ surveyId }: { surveyId: string }) {
 
   const survey = data.surveyRes.survey
   const forms = data.formsRes.forms
+  const formsTotal = data.formsRes.total
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div>
-          <h1 className="text-lg font-semibold">{survey.title}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            <Link
-              to="/surveys"
-              className="underline-offset-4 hover:underline"
-            >
-              All surveys
-            </Link>
-          </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="min-w-0 truncate text-lg font-semibold">{survey.title}</h1>
+        <div className="flex min-w-0 max-w-full flex-[1_1_16rem] flex-wrap items-center justify-end gap-2 sm:flex-[0_1_auto]">
+          <Link
+            to="/surveys/$surveyId/form"
+            params={{ surveyId }}
+            search={newFormSearchDefaults}
+            className={cn(buttonVariants({ size: "sm" }))}
+          >
+            New form
+          </Link>
+          <Button
+            variant="destructive"
+            size="sm"
+            disabled={deleteSurveyMutation.isPending}
+            onClick={() => setDeleteIntent({ type: "survey" })}
+          >
+            {deleteSurveyMutation.isPending ? "Deleting…" : "Delete survey"}
+          </Button>
+          <DebouncedSearchField
+            urlValue={formsList.q ?? ""}
+            isBusy={isFetching || navPending}
+            onDebouncedCommit={(text) => {
+              startTransition(() => {
+                void navigate({
+                  to: ".",
+                  replace: true,
+                  search: (prev) => ({
+                    ...prev,
+                    fq: text,
+                    foffset: 0,
+                  }),
+                })
+              })
+            }}
+            placeholder="Search forms (title, description, questions)…"
+            inputId={`survey-forms-search-${surveyId}`}
+            className="min-w-48 max-w-md basis-52 sm:max-w-xs"
+          />
         </div>
-        <Button
-          variant="destructive"
-          size="sm"
-          disabled={deleteSurveyMutation.isPending}
-          onClick={onDeleteSurvey}
-        >
-          {deleteSurveyMutation.isPending ? "Deleting…" : "Delete survey"}
-        </Button>
       </div>
 
       <Separator />
 
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-base font-medium">Forms</h2>
-        <Link
-          to="/surveys/$surveyId/form"
-          params={{ surveyId }}
-          search={{ cloneFrom: undefined }}
-          className={cn(buttonVariants())}
-        >
-          New form
-        </Link>
-      </div>
-
       {forms.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          No forms yet. Create one to collect responses.
+          No forms match. Try another search or create a form.
         </p>
       ) : (
         <ul className="divide-y rounded-lg border">
@@ -132,6 +166,7 @@ export function SurveyDetailView({ surveyId }: { surveyId: string }) {
                 <Link
                   to="/surveys/$surveyId/form/$formId"
                   params={{ surveyId, formId: f.id }}
+                  search={formResponsesSearchDefaults}
                   className="font-medium hover:underline"
                 >
                   {f.title}
@@ -146,7 +181,7 @@ export function SurveyDetailView({ surveyId }: { surveyId: string }) {
                 <Link
                   to="/surveys/$surveyId/form"
                   params={{ surveyId }}
-                  search={{ cloneFrom: f.id }}
+                  search={{ ...newFormSearchDefaults, cloneFrom: f.id }}
                   className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
                 >
                   Clone
@@ -158,7 +193,7 @@ export function SurveyDetailView({ surveyId }: { surveyId: string }) {
                     deleteFormMutation.isPending &&
                     deleteFormMutation.variables === f.id
                   }
-                  onClick={() => onDeleteForm(f.id)}
+                  onClick={() => setDeleteIntent({ type: "form", formId: f.id })}
                 >
                   {deleteFormMutation.isPending &&
                   deleteFormMutation.variables === f.id
@@ -170,6 +205,61 @@ export function SurveyDetailView({ surveyId }: { surveyId: string }) {
           ))}
         </ul>
       )}
+
+      <OffsetPaginationBar
+        total={formsTotal}
+        offset={formsList.offset}
+        limit={formsList.limit}
+        buildSearch={({ offset }) => ({
+          fq: formsList.q,
+          foffset: offset,
+          flimit: formsList.limit,
+        })}
+      />
+
+      <AlertDialog
+        open={deleteIntent !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteIntent(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {deleteIntent?.type === "survey"
+                ? "Delete this survey?"
+                : "Delete this form?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteIntent?.type === "survey"
+                ? "This removes the survey and all of its forms and responses. This cannot be undone."
+                : "This removes the form and all of its responses. This cannot be undone."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel type="button">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              type="button"
+              variant="destructive"
+              disabled={
+                deleteSurveyMutation.isPending || deleteFormMutation.isPending
+              }
+              onClick={() => {
+                const intent = deleteIntent
+                setDeleteIntent(null)
+                if (intent?.type === "survey") deleteSurveyMutation.mutate()
+                else if (intent?.type === "form") {
+                  deleteFormMutation.mutate(intent.formId)
+                }
+              }}
+            >
+              {deleteSurveyMutation.isPending || deleteFormMutation.isPending
+                ? "Deleting…"
+                : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

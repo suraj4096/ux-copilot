@@ -70,28 +70,3 @@ export function answersRecordToSubmissionArray(
   }
   return out
 }
-
-export function validateAnswers(form: FormSchema, answers: FormAnswersByQuestionId) {
-  const errorsByQuestionId: Record<string, string | undefined> = {}
-
-  for (const question of form.questions) {
-    const value = answers[question.id]
-
-    if (!question.required) continue
-
-    const missing =
-      value == null ||
-      (typeof value === "string" && value.trim().length === 0) ||
-      (Array.isArray(value) && value.length === 0)
-
-    if (missing) {
-      errorsByQuestionId[question.id] = "This field is required."
-    }
-  }
-
-  return {
-    isValid: Object.values(errorsByQuestionId).every((v) => !v),
-    errorsByQuestionId,
-  }
-}
-

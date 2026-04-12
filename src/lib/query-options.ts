@@ -11,6 +11,24 @@ import {
 } from "@/lib/data.functions"
 import { cloneFormSchemaAsDraft } from "@/lib/forms/defaults"
 
+export type SurveysListQueryParams = {
+  search?: string
+  offset?: number
+  limit?: number
+}
+
+export type SurveyFormsListParams = {
+  search?: string
+  offset?: number
+  limit?: number
+}
+
+export type FormResponsesListParams = {
+  search?: string
+  offset?: number
+  limit?: number
+}
+
 export type FormResponsesPageQueryData = {
   formRes:
     | { ok: false; errors: Array<string> }
@@ -25,22 +43,40 @@ export type FormResponsesPageQueryData = {
           submittedAt: Date | string
           answers: unknown
         }>
+        total: number
       }
 }
 
-export const listSurveysQueryOptions = () =>
+export const listSurveysQueryOptions = (params?: SurveysListQueryParams) =>
   queryOptions({
-    queryKey: ["surveys", "list"] as const,
-    queryFn: () => listSurveysFn(),
+    queryKey: ["surveys", "list", params ?? {}] as const,
+    queryFn: () =>
+      listSurveysFn({
+        data: {
+          search: params?.search,
+          offset: params?.offset,
+          limit: params?.limit,
+        },
+      }),
   })
 
-export const surveyDetailQueryOptions = (surveyId: string) =>
+export const surveyDetailQueryOptions = (
+  surveyId: string,
+  formsParams?: SurveyFormsListParams,
+) =>
   queryOptions({
-    queryKey: ["survey", surveyId, "detail"] as const,
+    queryKey: ["survey", surveyId, "detail", formsParams ?? {}] as const,
     queryFn: async () => {
       const [surveyRes, formsRes] = await Promise.all([
         getSurveyFn({ data: { surveyId } }),
-        listSurveyFormsFn({ data: { surveyId } }),
+        listSurveyFormsFn({
+          data: {
+            surveyId,
+            search: formsParams?.search,
+            offset: formsParams?.offset,
+            limit: formsParams?.limit,
+          },
+        }),
       ])
       return { surveyRes, formsRes }
     },
@@ -80,13 +116,30 @@ export const newFormCloneQueryOptions = (
     },
   })
 
-export const formResponsesPageQueryOptions = (surveyId: string, formId: string) =>
+export const formResponsesPageQueryOptions = (
+  surveyId: string,
+  formId: string,
+  listParams?: FormResponsesListParams,
+) =>
   queryOptions({
-    queryKey: ["surveyForm", formId, "responses", surveyId] as const,
+    queryKey: [
+      "surveyForm",
+      formId,
+      "responses",
+      surveyId,
+      listParams ?? {},
+    ] as const,
     queryFn: async (): Promise<FormResponsesPageQueryData> => {
       const [formRes, responsesRes] = await Promise.all([
         getSurveyFormForOwnerFn({ data: { formId } }),
-        listFormResponsesFn({ data: { surveyFormId: formId } }),
+        listFormResponsesFn({
+          data: {
+            surveyFormId: formId,
+            search: listParams?.search,
+            offset: listParams?.offset,
+            limit: listParams?.limit,
+          },
+        }),
       ])
       return { formRes, responsesRes } as FormResponsesPageQueryData
     },

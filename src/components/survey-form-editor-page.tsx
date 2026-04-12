@@ -2,10 +2,11 @@
 
 import * as React from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Link, useNavigate } from "@tanstack/react-router"
+import { useNavigate } from "@tanstack/react-router"
 import { useServerFn } from "@tanstack/react-start"
 
 import type { FormSchema } from "@/lib/forms/types"
+import { validateFormSchema } from "@/lib/forms/validator"
 import { FormBuilder } from "@/components/forms/form-builder"
 import { useFormBuilder } from "@/contexts/form-builder-context"
 import { FormRenderer } from "@/components/forms/form-renderer"
@@ -13,7 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { createSurveyFormFn } from "@/lib/data.functions"
-import { surveyDetailQueryOptions } from "@/lib/query-options"
+import { formResponsesSearchDefaults } from "@/lib/router-search-defaults"
 
 export function SurveyFormEditorPage({
   surveyId,
@@ -29,6 +30,9 @@ export function SurveyFormEditorPage({
   const createForm = useServerFn(createSurveyFormFn)
   const { values } = useFormBuilder()
   const [activeTab, setActiveTab] = React.useState("edit")
+  const [clientValidationError, setClientValidationError] = React.useState<
+    string | null
+  >(null)
 
   const saveMutation = useMutation({
     mutationFn: async (payload: FormSchema) => {
@@ -40,41 +44,39 @@ export function SurveyFormEditorPage({
     },
     onSuccess: async (res) => {
       await queryClient.invalidateQueries({
-        queryKey: surveyDetailQueryOptions(surveyId).queryKey,
+        queryKey: ["survey", surveyId, "detail"],
       })
       await navigate({
         to: "/surveys/$surveyId/form/$formId",
         params: { surveyId, formId: res.form.id },
+        search: formResponsesSearchDefaults,
       })
     },
   })
 
   function onSave() {
+    const parsed = validateFormSchema(values)
+    if (!parsed.ok) {
+      setClientValidationError(parsed.errors.join(" "))
+      return
+    }
+    setClientValidationError(null)
     saveMutation.mutate(values)
   }
 
   const saveError =
-    saveMutation.isError && saveMutation.error instanceof Error
+    clientValidationError ??
+    (saveMutation.isError && saveMutation.error instanceof Error
       ? saveMutation.error.message
-      : null
+      : null)
+
+  const hasTopAlerts =
+    Boolean(cloneError) ||
+    Boolean(clonedFromFormId && !cloneError) ||
+    Boolean(saveError)
 
   return (
     <div className="flex min-h-0 flex-1 flex-col pb-24">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="min-w-0">
-          <div className="truncate text-base font-medium">New form</div>
-          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-sm text-muted-foreground">
-            <Link
-              to="/surveys/$surveyId"
-              params={{ surveyId }}
-              className="underline-offset-4 hover:underline"
-            >
-              Back to survey
-            </Link>
-          </div>
-        </div>
-      </div>
-
       {cloneError ? (
         <div
           className="mt-3 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive"
@@ -99,7 +101,7 @@ export function SurveyFormEditorPage({
         </div>
       ) : null}
 
-      <Separator className="my-4" />
+      {hasTopAlerts ? <Separator className="my-4" /> : null}
 
       <div className="min-h-0 flex-1">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
@@ -107,8 +109,16 @@ export function SurveyFormEditorPage({
             <FormBuilder />
           </TabsContent>
           <TabsContent value="preview" className="h-full">
-            <div className="mx-auto w-full max-w-2xl">
-              <FormRenderer form={values} mode="preview" />
+            <div className="grid h-full min-h-0 gap-4 md:grid-cols-[16rem_1fr]">
+              <div
+                className="hidden self-start rounded-lg border border-transparent p-3 md:block"
+                aria-hidden
+              />
+              <section className="flex min-w-0 flex-col gap-4">
+                <div className="mx-auto w-full max-w-2xl">
+                  <FormRenderer form={values} mode="preview" />
+                </div>
+              </section>
             </div>
           </TabsContent>
         </Tabs>

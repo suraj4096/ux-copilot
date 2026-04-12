@@ -1,14 +1,10 @@
 import { createServerFn } from "@tanstack/react-start"
 
 import { getUserFromAuthCookie, loginWithEmail, logout } from "@/lib/auth.server"
+import { loginInputSchema } from "@/lib/server-input-schemas"
 
 export const loginFn = createServerFn({ method: "POST" })
-  .inputValidator((data: { email: string }) => {
-    if (typeof data.email !== "string" || !data.email) {
-      throw new Error("Email is required")
-    }
-    return { email: data.email.trim() }
-  })
+  .inputValidator((data: unknown) => loginInputSchema.parse(data))
   .handler(async ({ data }) => {
     try {
       return await loginWithEmail(data.email)

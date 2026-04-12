@@ -13,16 +13,16 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import {
-  
-  buildResponseTableRows
-} from "@/lib/forms/response-display"
+import { buildResponseTableRows } from "@/lib/forms/response-display"
+import { copilotResponseAnchorId } from "@/lib/copilot-links"
 import { cn } from "@/lib/utils"
 
 export function FormResponsesCards({
   form,
   responses,
   deletePendingId,
+  highlightResponseId,
+  assignCopilotAnchorId,
   onDeleteResponse,
 }: {
   form: FormSchema
@@ -32,6 +32,8 @@ export function FormResponsesCards({
     answers: unknown
   }>
   deletePendingId: string | null
+  highlightResponseId?: string
+  assignCopilotAnchorId?: boolean
   onDeleteResponse: (responseId: string) => void
 }) {
   const rows = useMemo(
@@ -57,11 +59,18 @@ export function FormResponsesCards({
       <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
         {rows.map((row) => (
           <article
+            id={
+              assignCopilotAnchorId
+                ? copilotResponseAnchorId(row.responseId)
+                : undefined
+            }
             key={row.responseId}
             className={cn(
-              "flex flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm",
-              row.payloadErrors.length > 0 &&
-                "ring-2 ring-destructive/25 ring-offset-2 ring-offset-background",
+              "flex flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm scroll-mt-4",
+              highlightResponseId === row.responseId
+                ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
+                : row.payloadErrors.length > 0 &&
+                    "ring-2 ring-destructive/25 ring-offset-2 ring-offset-background",
             )}
           >
             <header className="flex flex-wrap items-start justify-between gap-3 border-b px-4 py-3">

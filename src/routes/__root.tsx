@@ -4,6 +4,7 @@ import {
   Outlet,
   Scripts,
   createRootRouteWithContext,
+  useRouterState,
 } from "@tanstack/react-router"
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools"
 import { TanStackDevtools } from "@tanstack/react-devtools"
@@ -11,6 +12,10 @@ import { TanStackDevtools } from "@tanstack/react-devtools"
 import appCss from "../styles.css?url"
 import type { QueryClient } from "@tanstack/react-query"
 import { Providers } from "@/components/providers"
+import {
+  DrawAgentRuntimeProvider,
+  WorkspaceAgentRuntimeProvider,
+} from "@/contexts/agent-chat-context"
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient
@@ -41,11 +46,11 @@ export const Route = createRootRouteWithContext<{
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className="h-dvh overflow-hidden">
       <head>
         <HeadContent />
       </head>
-      <body>
+      <body className="flex h-dvh max-h-dvh flex-col overflow-hidden bg-background antialiased">
         <Providers>{children}</Providers>
         <TanStackDevtools
           config={{
@@ -66,9 +71,24 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 }
 
 function RootLayout() {
+  const agentBranch = useRouterState({
+    select: (s) => {
+      const p = s.location.pathname.replace(/\/$/, "") || "/"
+      return p === "/draw" ? "draw" : "workspace"
+    },
+  })
+
   return (
-    <div className="min-h-svh bg-background text-foreground">
-      <Outlet />
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-background text-foreground">
+      {agentBranch === "draw" ? (
+        <DrawAgentRuntimeProvider key="draw-agent">
+          <Outlet />
+        </DrawAgentRuntimeProvider>
+      ) : (
+        <WorkspaceAgentRuntimeProvider key="workspace-agent">
+          <Outlet />
+        </WorkspaceAgentRuntimeProvider>
+      )}
     </div>
   )
 }

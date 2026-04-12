@@ -65,7 +65,7 @@ export function FormBuilder({ className }: { className?: string }) {
   return (
     <div className={cn("grid gap-4 md:grid-cols-[16rem_1fr]", className)}>
       <FormBuilderDragLayer questions={values.questions} />
-      <aside className="rounded-lg border bg-card p-3 text-card-foreground">
+      <aside className="self-start rounded-lg border bg-card p-3 text-card-foreground">
         <div className="text-sm font-medium">Add form items</div>
         <SidebarWithDeleteOverlay
           onRemoveQuestion={actions.removeQuestionById}

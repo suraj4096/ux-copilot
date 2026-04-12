@@ -1,17 +1,17 @@
 import * as React from "react"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 
-import { loginFn } from "@/lib/auth.functions"
+import { AppNavbar } from "@/components/app-navbar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Spinner } from "@/components/ui/spinner"
 import { useAuth } from "@/contexts/auth-context"
+import { loginFn } from "@/lib/auth.functions"
+import { loginSearchSchema } from "@/lib/router-search-schemas"
 
 export const Route = createFileRoute("/login")({
-  validateSearch: (search: Record<string, unknown>) => {
-    const redirect =
-      typeof search.redirect === "string" ? search.redirect : "/"
-    return { redirect }
-  },
+  validateSearch: (search: Record<string, unknown>) =>
+    loginSearchSchema.parse(search),
   component: LoginPage,
 })
 
@@ -43,39 +43,51 @@ function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-svh items-center justify-center p-4">
-      <div className="mx-auto w-full max-w-sm space-y-4">
-        <div className="space-y-1">
-          <div className="text-base font-medium">Login</div>
-          <div className="text-sm text-muted-foreground">
-            Enter your email. If it exists, you’ll be signed in for 7 days.
-          </div>
-        </div>
+    <div className="flex min-h-0 flex-1 flex-col">
+      <AppNavbar />
+      <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto p-4">
+        <div className="mx-auto w-full max-w-xs space-y-4">
+          <div className="text-lg font-medium">Login</div>
 
-        <form className="space-y-3" onSubmit={onSubmit}>
-          <div className="space-y-2">
-            <div className="text-sm font-medium">Email</div>
-            <Input
-              name="email"
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@company.com"
-              required
-            />
-          </div>
-
-          {error ? (
-            <div className="text-sm text-destructive" role="alert">
-              {error}
+          <form className="space-y-4" onSubmit={onSubmit}>
+            <div className="space-y-1">
+              <div className="text-sm text-muted-foreground">
+                Enter your email to continue.
+              </div>
+              <Input
+                name="email"
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@company.com"
+                required
+              />
             </div>
-          ) : null}
 
-          <Button className="w-full" type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Signing in..." : "Sign in"}
-          </Button>
-        </form>
+            {error ? (
+              <div className="text-sm text-destructive" role="alert">
+                {error}
+              </div>
+            ) : null}
+
+            <Button
+              className="w-full"
+              type="submit"
+              disabled={isSubmitting}
+              aria-busy={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Spinner className="size-4" aria-hidden />
+                  Signing in…
+                </>
+              ) : (
+                "Sign in"
+              )}
+            </Button>
+          </form>
+        </div>
       </div>
     </div>
   )

@@ -4,8 +4,9 @@ import * as React from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
 import { useServerFn } from "@tanstack/react-start"
+import type { VariantProps } from "class-variance-authority"
 
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -18,9 +19,22 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { createSurveyFn } from "@/lib/data.functions"
-import { listSurveysQueryOptions } from "@/lib/query-options"
+import { surveyDetailSearchDefaults } from "@/lib/router-search-defaults"
+import { cn } from "@/lib/utils"
 
-export function NewSurveyDialog({ children }: { children: React.ReactNode }) {
+type ButtonVariantProps = VariantProps<typeof buttonVariants>
+
+export function NewSurveyDialog({
+  children,
+  triggerVariant = "default",
+  triggerSize = "default",
+  triggerClassName,
+}: {
+  children: React.ReactNode
+  triggerVariant?: ButtonVariantProps["variant"]
+  triggerSize?: ButtonVariantProps["size"]
+  triggerClassName?: string
+}) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const createSurvey = useServerFn(createSurveyFn)
@@ -34,14 +48,13 @@ export function NewSurveyDialog({ children }: { children: React.ReactNode }) {
       return res
     },
     onSuccess: async (res) => {
-      await queryClient.invalidateQueries({
-        queryKey: listSurveysQueryOptions().queryKey,
-      })
+      await queryClient.invalidateQueries({ queryKey: ["surveys", "list"] })
       setOpen(false)
       setTitle("")
       await navigate({
         to: "/surveys/$surveyId",
         params: { surveyId: res.survey.id },
+        search: surveyDetailSearchDefaults,
       })
     },
   })
@@ -58,7 +71,13 @@ export function NewSurveyDialog({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <Button type="button" variant="default" onClick={() => setOpen(true)}>
+      <Button
+        type="button"
+        variant={triggerVariant}
+        size={triggerSize}
+        className={cn(triggerClassName)}
+        onClick={() => setOpen(true)}
+      >
         {children}
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>

@@ -7,7 +7,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <DndProvider backend={HTML5Backend}>
       <TooltipProvider>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+            {children}
+          </div>
+        </AuthProvider>
       </TooltipProvider>
     </DndProvider>
   )

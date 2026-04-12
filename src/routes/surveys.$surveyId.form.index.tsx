@@ -1,19 +1,23 @@
+import * as React from "react"
 import { useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 
+import type { FormSchema } from "@/lib/forms/types"
 import { AppShell } from "@/components/app-shell"
-import { FormBuilderProvider } from "@/contexts/form-builder-context"
 import { SurveyFormEditorPage } from "@/components/survey-form-editor-page"
+import { FormBuilderProvider } from "@/contexts/form-builder-context"
+import {
+  discardAgentFormDraft,
+  readAgentFormDraft,
+} from "@/lib/ai/client/agent-draft-storage"
+import { validateFormSchema } from "@/lib/forms/validator"
 import { newFormCloneQueryOptions } from "@/lib/query-options"
+import { newFormSearchSchema } from "@/lib/router-search-schemas"
 import { requireSession } from "@/lib/route-guards"
 
 export const Route = createFileRoute("/surveys/$surveyId/form/")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    cloneFrom:
-      typeof search.cloneFrom === "string" && search.cloneFrom.trim()
-        ? search.cloneFrom.trim()
-        : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>) =>
+    newFormSearchSchema.parse(search),
   beforeLoad: async ({ location }) => {
     await requireSession({ location })
   },
@@ -30,15 +34,39 @@ export const Route = createFileRoute("/surveys/$surveyId/form/")({
 function NewSurveyFormPage() {
   const { surveyId } = Route.useParams()
   const search = Route.useSearch()
+  const navigate = Route.useNavigate()
   const { data } = useSuspenseQuery(
     newFormCloneQueryOptions(surveyId, search.cloneFrom),
   )
 
-  const key = `${surveyId}-${search.cloneFrom ?? "new"}`
+  const [agentInitial, setAgentInitial] = React.useState<
+    FormSchema | undefined
+  >(undefined)
+  React.useLayoutEffect(() => {
+    const draftId = search.agentDraft
+    if (!draftId) return
+    const raw = readAgentFormDraft(draftId)
+    const stripDraftParam = () =>
+      void navigate({
+        search: (prev) => ({ ...prev, agentDraft: undefined }),
+        replace: true,
+      })
+    if (raw === undefined) {
+      stripDraftParam()
+      return
+    }
+    const parsed = validateFormSchema(raw)
+    discardAgentFormDraft(draftId)
+    stripDraftParam()
+    if (parsed.ok) setAgentInitial(parsed.value)
+  }, [search.agentDraft, navigate])
+
+  const initialForm = agentInitial ?? data.initialForm ?? undefined
+  const key = `${surveyId}-${search.cloneFrom ?? "new"}-${agentInitial?.id ?? "default"}`
 
   return (
     <AppShell>
-      <FormBuilderProvider key={key} initialForm={data.initialForm ?? undefined}>
+      <FormBuilderProvider key={key} initialForm={initialForm}>
         <SurveyFormEditorPage
           surveyId={surveyId}
           cloneError={data.cloneError}

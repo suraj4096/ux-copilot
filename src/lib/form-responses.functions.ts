@@ -5,24 +5,24 @@ import {
   createFormResponse,
   deleteFormResponse,
   getSurveyFormById,
-  listFormResponsesByFormId,
+  listFormResponsesForFormPage,
 } from "@/lib/db/queries"
 import {
   parseResponseAnswersForPersist,
   parseSurveyFormRowForRenderer,
 } from "@/lib/forms/persist"
+import {
+  deleteFormResponseInputSchema,
+  listFormResponsesPagedInputSchema,
+  submitFormResponseInputSchema,
+} from "@/lib/server-input-schemas"
 
 function requireUser() {
   return getUserFromAuthCookie()
 }
 
 export const submitFormResponseFn = createServerFn({ method: "POST" })
-  .inputValidator((data: { surveyFormId: string; answers: unknown }) => {
-    if (typeof data.surveyFormId !== "string" || !data.surveyFormId.trim()) {
-      throw new Error("surveyFormId is required")
-    }
-    return { surveyFormId: data.surveyFormId.trim(), answers: data.answers }
-  })
+  .inputValidator((data: unknown) => submitFormResponseInputSchema.parse(data))
   .handler(async ({ data }) => {
     const row = await getSurveyFormById(data.surveyFormId)
     if (!row) {
@@ -62,18 +62,18 @@ export const submitFormResponseFn = createServerFn({ method: "POST" })
   })
 
 export const listFormResponsesFn = createServerFn({ method: "GET" })
-  .inputValidator((data: { surveyFormId: string }) => {
-    if (typeof data.surveyFormId !== "string" || !data.surveyFormId.trim()) {
-      throw new Error("surveyFormId is required")
-    }
-    return { surveyFormId: data.surveyFormId.trim() }
-  })
+  .inputValidator((data: unknown) => listFormResponsesPagedInputSchema.parse(data))
   .handler(async ({ data }) => {
     const user = await requireUser()
     if (!user) return { ok: false as const, errors: ["Unauthorized"] }
 
-    const rows = await listFormResponsesByFormId(user.email, data.surveyFormId)
-    if (rows === null) {
+    const { surveyFormId, ...page } = data
+    const result = await listFormResponsesForFormPage(
+      user.email,
+      surveyFormId,
+      page,
+    )
+    if (result === null) {
       return {
         ok: false as const,
         errors: ["Form not found or you do not have access"],
@@ -81,17 +81,13 @@ export const listFormResponsesFn = createServerFn({ method: "GET" })
     }
     return {
       ok: true as const,
-      responses: rows.map((r) => ({ ...r, answers: r.answers as {} })),
+      responses: result.items.map((r) => ({ ...r, answers: r.answers as {} })),
+      total: result.total,
     }
   })
 
 export const deleteFormResponseFn = createServerFn({ method: "POST" })
-  .inputValidator((data: { responseId: string }) => {
-    if (typeof data.responseId !== "string" || !data.responseId.trim()) {
-      throw new Error("responseId is required")
-    }
-    return { responseId: data.responseId.trim() }
-  })
+  .inputValidator((data: unknown) => deleteFormResponseInputSchema.parse(data))
   .handler(async ({ data }) => {
     const user = await requireUser()
     if (!user) return { ok: false as const, errors: ["Unauthorized"] }

@@ -4,12 +4,17 @@ import * as React from "react"
 import { useForm } from "@tanstack/react-form"
 import { useServerFn } from "@tanstack/react-start"
 
-import type { FormAnswersByQuestionId, FormSchema } from "@/lib/forms/types"
+import type {
+  FormAnswerValue,
+  FormAnswersByQuestionId,
+  FormSchema,
+} from "@/lib/forms/types"
 import {
   answersRecordToSubmissionArray,
   coerceAnswerForQuestion,
   createEmptyAnswers,
 } from "@/lib/forms/answers"
+import { validateFillAnswerForQuestion } from "@/lib/forms/validator/answer-value-schema"
 import { submitFormResponseFn } from "@/lib/form-responses.functions"
 import { cn } from "@/lib/utils"
 
@@ -115,14 +120,8 @@ export function FormRenderer({
             name={name as any}
             mode={q.type === "multi_choice" ? "array" : "value"}
             validators={{
-              onSubmit: ({ value }) => {
-                if (!q.required) return undefined
-                const missing =
-                  value == null ||
-                  (typeof value === "string" && value.trim().length === 0) ||
-                  (Array.isArray(value) && value.length === 0)
-                return missing ? "This field is required." : undefined
-              },
+              onSubmit: ({ value }) =>
+                validateFillAnswerForQuestion(q, value as FormAnswerValue),
             }}
           >
             {(field) => {
