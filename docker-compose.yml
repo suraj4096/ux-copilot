@@ -24,6 +24,21 @@ services:
     networks:
       - default
 
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - default
+
   adminer:
     image: adminer
     restart: always
