@@ -3,7 +3,6 @@ import { useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 
 import type { FormSchema } from "@/lib/forms/types"
-import { AppShell } from "@/components/app-shell"
 import { SurveyFormEditorPage } from "@/components/survey-form-editor-page"
 import { FormBuilderProvider } from "@/contexts/form-builder-context"
 import {
@@ -65,14 +64,12 @@ function NewSurveyFormPage() {
   const key = `${surveyId}-${search.cloneFrom ?? "new"}-${agentInitial?.id ?? "default"}`
 
   return (
-    <AppShell>
-      <FormBuilderProvider key={key} initialForm={initialForm}>
-        <SurveyFormEditorPage
-          surveyId={surveyId}
-          cloneError={data.cloneError}
-          clonedFromFormId={search.cloneFrom}
-        />
-      </FormBuilderProvider>
-    </AppShell>
+    <FormBuilderProvider key={key} initialForm={initialForm}>
+      <SurveyFormEditorPage
+        surveyId={surveyId}
+        cloneError={data.cloneError}
+        clonedFromFormId={search.cloneFrom}
+      />
+    </FormBuilderProvider>
   )
 }

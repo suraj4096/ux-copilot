@@ -10,24 +10,17 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as DrawRouteImport } from './routes/draw'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SurveysIndexRouteImport } from './routes/surveys.index'
 import { Route as FFormIdRouteImport } from './routes/f.$formId'
 import { Route as ApiChatRouteImport } from './routes/api.chat'
 import { Route as SurveysSurveyIdIndexRouteImport } from './routes/surveys.$surveyId.index'
-import { Route as ApiChatDrawRouteImport } from './routes/api.chat.draw'
 import { Route as SurveysSurveyIdFormIndexRouteImport } from './routes/surveys.$surveyId.form.index'
 import { Route as SurveysSurveyIdFormFormIdIndexRouteImport } from './routes/surveys.$surveyId.form.$formId.index'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DrawRoute = DrawRouteImport.update({
-  id: '/draw',
-  path: '/draw',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -55,11 +48,6 @@ const SurveysSurveyIdIndexRoute = SurveysSurveyIdIndexRouteImport.update({
   path: '/surveys/$surveyId/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiChatDrawRoute = ApiChatDrawRouteImport.update({
-  id: '/draw',
-  path: '/draw',
-  getParentRoute: () => ApiChatRoute,
-} as any)
 const SurveysSurveyIdFormIndexRoute =
   SurveysSurveyIdFormIndexRouteImport.update({
     id: '/surveys/$surveyId/form/',
@@ -75,24 +63,20 @@ const SurveysSurveyIdFormFormIdIndexRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/draw': typeof DrawRoute
   '/login': typeof LoginRoute
-  '/api/chat': typeof ApiChatRouteWithChildren
+  '/api/chat': typeof ApiChatRoute
   '/f/$formId': typeof FFormIdRoute
   '/surveys/': typeof SurveysIndexRoute
-  '/api/chat/draw': typeof ApiChatDrawRoute
   '/surveys/$surveyId/': typeof SurveysSurveyIdIndexRoute
   '/surveys/$surveyId/form/': typeof SurveysSurveyIdFormIndexRoute
   '/surveys/$surveyId/form/$formId/': typeof SurveysSurveyIdFormFormIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/draw': typeof DrawRoute
   '/login': typeof LoginRoute
-  '/api/chat': typeof ApiChatRouteWithChildren
+  '/api/chat': typeof ApiChatRoute
   '/f/$formId': typeof FFormIdRoute
   '/surveys': typeof SurveysIndexRoute
-  '/api/chat/draw': typeof ApiChatDrawRoute
   '/surveys/$surveyId': typeof SurveysSurveyIdIndexRoute
   '/surveys/$surveyId/form': typeof SurveysSurveyIdFormIndexRoute
   '/surveys/$surveyId/form/$formId': typeof SurveysSurveyIdFormFormIdIndexRoute
@@ -100,12 +84,10 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/draw': typeof DrawRoute
   '/login': typeof LoginRoute
-  '/api/chat': typeof ApiChatRouteWithChildren
+  '/api/chat': typeof ApiChatRoute
   '/f/$formId': typeof FFormIdRoute
   '/surveys/': typeof SurveysIndexRoute
-  '/api/chat/draw': typeof ApiChatDrawRoute
   '/surveys/$surveyId/': typeof SurveysSurveyIdIndexRoute
   '/surveys/$surveyId/form/': typeof SurveysSurveyIdFormIndexRoute
   '/surveys/$surveyId/form/$formId/': typeof SurveysSurveyIdFormFormIdIndexRoute
@@ -114,36 +96,30 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/draw'
     | '/login'
     | '/api/chat'
     | '/f/$formId'
     | '/surveys/'
-    | '/api/chat/draw'
     | '/surveys/$surveyId/'
     | '/surveys/$surveyId/form/'
     | '/surveys/$surveyId/form/$formId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/draw'
     | '/login'
     | '/api/chat'
     | '/f/$formId'
     | '/surveys'
-    | '/api/chat/draw'
     | '/surveys/$surveyId'
     | '/surveys/$surveyId/form'
     | '/surveys/$surveyId/form/$formId'
   id:
     | '__root__'
     | '/'
-    | '/draw'
     | '/login'
     | '/api/chat'
     | '/f/$formId'
     | '/surveys/'
-    | '/api/chat/draw'
     | '/surveys/$surveyId/'
     | '/surveys/$surveyId/form/'
     | '/surveys/$surveyId/form/$formId/'
@@ -151,9 +127,8 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  DrawRoute: typeof DrawRoute
   LoginRoute: typeof LoginRoute
-  ApiChatRoute: typeof ApiChatRouteWithChildren
+  ApiChatRoute: typeof ApiChatRoute
   FFormIdRoute: typeof FFormIdRoute
   SurveysIndexRoute: typeof SurveysIndexRoute
   SurveysSurveyIdIndexRoute: typeof SurveysSurveyIdIndexRoute
@@ -168,13 +143,6 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/draw': {
-      id: '/draw'
-      path: '/draw'
-      fullPath: '/draw'
-      preLoaderRoute: typeof DrawRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -212,13 +180,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SurveysSurveyIdIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/chat/draw': {
-      id: '/api/chat/draw'
-      path: '/draw'
-      fullPath: '/api/chat/draw'
-      preLoaderRoute: typeof ApiChatDrawRouteImport
-      parentRoute: typeof ApiChatRoute
-    }
     '/surveys/$surveyId/form/': {
       id: '/surveys/$surveyId/form/'
       path: '/surveys/$surveyId/form'
@@ -236,22 +197,10 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface ApiChatRouteChildren {
-  ApiChatDrawRoute: typeof ApiChatDrawRoute
-}
-
-const ApiChatRouteChildren: ApiChatRouteChildren = {
-  ApiChatDrawRoute: ApiChatDrawRoute,
-}
-
-const ApiChatRouteWithChildren =
-  ApiChatRoute._addFileChildren(ApiChatRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  DrawRoute: DrawRoute,
   LoginRoute: LoginRoute,
-  ApiChatRoute: ApiChatRouteWithChildren,
+  ApiChatRoute: ApiChatRoute,
   FFormIdRoute: FFormIdRoute,
   SurveysIndexRoute: SurveysIndexRoute,
   SurveysSurveyIdIndexRoute: SurveysSurveyIdIndexRoute,

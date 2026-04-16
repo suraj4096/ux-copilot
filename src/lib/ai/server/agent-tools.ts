@@ -22,11 +22,22 @@ const pageToolSchema = z.object({
   limit: z.number().int().min(1).max(100).optional(),
 })
 
-export function createAgentTools(ownerEmail: string) {
+export const agentModes = ["auto", "survey"] as const
+export type AgentMode = (typeof agentModes)[number]
+
+const surveyToolNames = [
+  "search_surveys",
+  "search_forms",
+  "search_responses",
+  "validate_form_json",
+  "open_form_editor",
+] as const
+
+function createSurveyTools(ownerEmail: string) {
   return {
     search_surveys: tool({
       description:
-        "Search and page surveys you own. Text matches survey title (case-insensitive). Default sort: title, then id. In replies, never print ids in prose; each survey is one chip [[surveyTitle:/surveys/<id>]] using the exact title string from results and the id only inside the path—not labels like “Open …”.",
+        "Search and page surveys you own. Text matches survey title (case-insensitive). Default sort: title, then id. In replies, never print ids in prose; each survey is one chip [[surveyTitle:/surveys/<id>]] using the exact title string from results and the id only inside the path-not labels like \"Open ...\".",
       inputSchema: pageToolSchema,
       execute: async (input) => {
         const page = normalizeListPageParams(input)
@@ -111,7 +122,7 @@ export function createAgentTools(ownerEmail: string) {
 
     validate_form_json: tool({
       description:
-        "Validate a full form draft in memory only—does not save or publish anything. Root: id, title, optional description, questions (≥1, unique question ids, ≥1 required question). Question types ONLY: short_text, long_text, number, single_choice, multi_choice. Choice questions need options: [{ value, label }, ...] with unique values. If ok: false, fix the payload from errors and call this tool again with the full corrected JSON—repeat until ok: true before open_form_editor with formJson. Returns errors or the normalized form.",
+        "Validate a full form draft in memory only-does not save or publish anything. Root: id, title, optional description, questions (>=1, unique question ids, >=1 required question). Question types ONLY: short_text, long_text, number, single_choice, multi_choice. Choice questions need options: [{ value, label }, ...] with unique values. If ok: false, fix the payload from errors and call this tool again with the full corrected JSON-repeat until ok: true before open_form_editor with formJson. Returns errors or the normalized form.",
       inputSchema: z.object({
         payload: z.unknown(),
       }),
@@ -126,7 +137,7 @@ export function createAgentTools(ownerEmail: string) {
 
     open_form_editor: tool({
       description:
-        "Triggers client navigation to the new-form editor for a survey and optionally injects a draft into the browser session. Does NOT persist the form—user must Save in the editor. Pass formJson only when it already passes validate_form_json (same shape: allowed types short_text, long_text, number, single_choice, multi_choice; choice options as {value,label} objects). Omit formJson for a blank form. Use cloneFromFormId to clone. Prefer surveyId from UI context.",
+        "Triggers client navigation to the new-form editor for a survey and optionally injects a draft into the browser session. Does NOT persist the form-user must Save in the editor. Pass formJson only when it already passes validate_form_json (same shape: allowed types short_text, long_text, number, single_choice, multi_choice; choice options as {value,label} objects). Omit formJson for a blank form. Use cloneFromFormId to clone. Prefer surveyId from UI context.",
       inputSchema: z.object({
         surveyId: z.string().min(1),
         cloneFromFormId: z.string().min(1).optional(),
@@ -163,6 +174,18 @@ export function createAgentTools(ownerEmail: string) {
       },
     }),
   }
+}
+
+export function listToolNamesForMode(mode: AgentMode): Array<string> {
+  if (mode === "survey" || mode === "auto") {
+    return [...surveyToolNames]
+  }
+  return [...surveyToolNames]
+}
+
+export function createAgentTools(ownerEmail: string, mode: AgentMode) {
+  if (mode !== "survey" && mode !== "auto") return {}
+  return createSurveyTools(ownerEmail)
 }
 
 function truncateValue(value: unknown, maxChars: number): unknown {

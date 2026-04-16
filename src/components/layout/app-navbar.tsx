@@ -18,18 +18,14 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
 import { logoutFn } from "@/lib/auth.functions"
 import { useAuth } from "@/contexts/auth-context"
-import { AppLogo } from "./app-logo"
-
-function emailInitial(email: string): string {
-  const c = email.trim().charAt(0)
-  return c ? c.toUpperCase() : "?"
-}
+import { initialFromName } from "@/lib/user-identity"
+import { AppLogo } from "../app-logo"
 
 export function AppNavbar() {
   const navigate = useNavigate()
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const isLoginRoute = pathname === "/login"
-  const { user, isLoading, refetch } = useAuth()
+  const { identity, isLoading, refetch } = useAuth()
   const [isSigningOut, setIsSigningOut] = React.useState(false)
 
   async function onSignOut() {
@@ -57,7 +53,7 @@ export function AppNavbar() {
           aria-busy
           aria-label="Loading account"
         />
-      ) : user ? (
+      ) : identity ? (
         <DropdownMenu>
           <DropdownMenuTrigger
             type="button"
@@ -65,7 +61,7 @@ export function AppNavbar() {
           >
             <Avatar>
               <AvatarFallback className="bg-primary/15 text-sm font-medium text-foreground">
-                {emailInitial(user.email)}
+                {initialFromName(identity.name)}
               </AvatarFallback>
             </Avatar>
           </DropdownMenuTrigger>
@@ -73,7 +69,7 @@ export function AppNavbar() {
             <DropdownMenuGroup>
               <DropdownMenuLabel className="font-normal">
                 <span className="block truncate text-sm font-normal text-foreground">
-                  {user.email}
+                  {identity.email}
                 </span>
               </DropdownMenuLabel>
             </DropdownMenuGroup>

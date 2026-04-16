@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router"
 
-import { AppShell } from "@/components/app-shell"
 import { SurveyDetailView } from "@/components/survey-detail-view"
 import { surveyDetailQueryOptions } from "@/lib/query-options"
 import { surveyDetailSearchSchema } from "@/lib/router-search-schemas"
@@ -33,15 +32,13 @@ function SurveyDetailPage() {
   const search = Route.useSearch()
 
   return (
-    <AppShell>
-      <SurveyDetailView
-        surveyId={surveyId}
-        formsList={{
-          q: search.fq,
-          offset: search.foffset,
-          limit: search.flimit,
-        }}
-      />
-    </AppShell>
+    <SurveyDetailView
+      surveyId={surveyId}
+      formsList={{
+        q: search.fq,
+        offset: search.foffset,
+        limit: search.flimit,
+      }}
+    />
   )
 }

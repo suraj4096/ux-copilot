@@ -1,7 +1,7 @@
 "use client"
 
 import { Link } from "@tanstack/react-router"
-import { ClipboardList, Home, PenLine } from "lucide-react"
+import { ClipboardList, Home } from "lucide-react"
 
 import { surveysListSearchDefaults } from "@/lib/router-search-defaults"
 
@@ -38,16 +38,6 @@ export function AppNavRail() {
       >
         <ClipboardList className="size-5 shrink-0" aria-hidden />
         Surveys
-      </Link>
-      <Link
-        to="/draw"
-        activeOptions={{ exact: true }}
-        className={railItemClass}
-        inactiveProps={{ className: railItemInactive }}
-        activeProps={{ className: railItemActive }}
-      >
-        <PenLine className="size-5 shrink-0" aria-hidden />
-        Draw
       </Link>
     </nav>
   )

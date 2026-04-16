@@ -4,8 +4,8 @@ import { useMemo, useState } from "react"
 
 import type { FormSchema } from "@/lib/forms/types"
 import type {ResponseTableRow} from "@/lib/forms/response-display";
-import { FormResponseViewDialog } from "@/components/form-response-view-dialog"
-import { questionColumnPreset } from "@/components/form-responses-presentation"
+import { FormResponseViewDialog } from "@/components/form/form-response-view-dialog"
+import { questionColumnPreset } from "@/components/form/form-responses-presentation"
 import { Button } from "@/components/ui/button"
 import {
   Table,
@@ -238,7 +238,7 @@ export function FormResponsesTable({
         form={form}
         row={detailRow}
         open={detailRow !== null}
-        onOpenChange={(next) => {
+        onOpenChange={(next: boolean) => {
           if (!next) setDetailRow(null)
         }}
       />

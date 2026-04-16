@@ -1,6 +1,13 @@
 import { queryOptions } from "@tanstack/react-query"
 
 import type { FormSchema } from "@/lib/forms/types"
+import { getCurrentUserFn } from "@/lib/auth.functions"
+import {
+  queryKeys,
+  type FormResponsesListParams,
+  type SurveyFormsListParams,
+  type SurveysListQueryParams,
+} from "@/lib/query-keys"
 import {
   getSurveyFn,
   getSurveyFormForOwnerFn,
@@ -10,24 +17,6 @@ import {
   listSurveysFn,
 } from "@/lib/data.functions"
 import { cloneFormSchemaAsDraft } from "@/lib/forms/defaults"
-
-export type SurveysListQueryParams = {
-  search?: string
-  offset?: number
-  limit?: number
-}
-
-export type SurveyFormsListParams = {
-  search?: string
-  offset?: number
-  limit?: number
-}
-
-export type FormResponsesListParams = {
-  search?: string
-  offset?: number
-  limit?: number
-}
 
 export type FormResponsesPageQueryData = {
   formRes:
@@ -47,9 +36,15 @@ export type FormResponsesPageQueryData = {
       }
 }
 
+export const currentUserQueryOptions = () =>
+  queryOptions({
+    queryKey: queryKeys.auth.currentUser,
+    queryFn: () => getCurrentUserFn(),
+  })
+
 export const listSurveysQueryOptions = (params?: SurveysListQueryParams) =>
   queryOptions({
-    queryKey: ["surveys", "list", params ?? {}] as const,
+    queryKey: queryKeys.surveys.list(params),
     queryFn: () =>
       listSurveysFn({
         data: {
@@ -65,7 +60,7 @@ export const surveyDetailQueryOptions = (
   formsParams?: SurveyFormsListParams,
 ) =>
   queryOptions({
-    queryKey: ["survey", surveyId, "detail", formsParams ?? {}] as const,
+    queryKey: queryKeys.surveys.detail(surveyId, formsParams),
     queryFn: async () => {
       const [surveyRes, formsRes] = await Promise.all([
         getSurveyFn({ data: { surveyId } }),
@@ -92,7 +87,7 @@ export const newFormCloneQueryOptions = (
   cloneFrom: string | undefined,
 ) =>
   queryOptions({
-    queryKey: ["survey", surveyId, "newFormClone", cloneFrom ?? "none"] as const,
+    queryKey: queryKeys.surveys.newFormClone(surveyId, cloneFrom),
     queryFn: async (): Promise<NewFormCloneQueryResult> => {
       if (!cloneFrom) {
         return { initialForm: null, cloneError: null }
@@ -122,13 +117,7 @@ export const formResponsesPageQueryOptions = (
   listParams?: FormResponsesListParams,
 ) =>
   queryOptions({
-    queryKey: [
-      "surveyForm",
-      formId,
-      "responses",
-      surveyId,
-      listParams ?? {},
-    ] as const,
+    queryKey: queryKeys.surveyForm.responsesPage(surveyId, formId, listParams),
     queryFn: async (): Promise<FormResponsesPageQueryData> => {
       const [formRes, responsesRes] = await Promise.all([
         getSurveyFormForOwnerFn({ data: { formId } }),
@@ -147,6 +136,6 @@ export const formResponsesPageQueryOptions = (
 
 export const publicFormQueryOptions = (formId: string) =>
   queryOptions({
-    queryKey: ["publicForm", formId] as const,
+    queryKey: queryKeys.publicForm.detail(formId),
     queryFn: () => getSurveyFormPublicFn({ data: { formId } }),
   })

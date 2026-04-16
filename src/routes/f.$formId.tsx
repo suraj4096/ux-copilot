@@ -1,7 +1,7 @@
 import { useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 
-import { PublicFormPage } from "@/components/public-form-page"
+import { PublicFormPage } from "@/components/form/public-form-page"
 import { publicFormQueryOptions } from "@/lib/query-options"
 
 export const Route = createFileRoute("/f/$formId")({

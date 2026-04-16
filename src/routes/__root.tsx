@@ -11,11 +11,9 @@ import { TanStackDevtools } from "@tanstack/react-devtools"
 
 import appCss from "../styles.css?url"
 import type { QueryClient } from "@tanstack/react-query"
+import { AgenticShell } from "@/components/layout/app-shell"
 import { Providers } from "@/components/providers"
-import {
-  DrawAgentRuntimeProvider,
-  WorkspaceAgentRuntimeProvider,
-} from "@/contexts/agent-chat-context"
+import { WorkspaceAgentRuntimeProvider } from "@/contexts/agent-chat-context"
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient
@@ -71,24 +69,24 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 }
 
 function RootLayout() {
-  const agentBranch = useRouterState({
-    select: (s) => {
-      const p = s.location.pathname.replace(/\/$/, "") || "/"
-      return p === "/draw" ? "draw" : "workspace"
-    },
-  })
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
+  const isPublicLayout = pathname === "/login"
+
+  if (isPublicLayout) {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-background text-foreground">
+        <Outlet />
+      </div>
+    )
+  }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-background text-foreground">
-      {agentBranch === "draw" ? (
-        <DrawAgentRuntimeProvider key="draw-agent">
+      <WorkspaceAgentRuntimeProvider key="workspace-agent">
+        <AgenticShell>
           <Outlet />
-        </DrawAgentRuntimeProvider>
-      ) : (
-        <WorkspaceAgentRuntimeProvider key="workspace-agent">
-          <Outlet />
-        </WorkspaceAgentRuntimeProvider>
-      )}
+        </AgenticShell>
+      </WorkspaceAgentRuntimeProvider>
     </div>
   )
 }

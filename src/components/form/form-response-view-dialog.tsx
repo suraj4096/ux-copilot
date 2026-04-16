@@ -4,7 +4,7 @@ import { useMemo } from "react"
 
 import type { ResponseTableRow } from "@/lib/forms/response-display"
 import type { FormSchema } from "@/lib/forms/types"
-import { questionColumnPreset } from "@/components/form-responses-presentation"
+import { questionColumnPreset } from "@/components/form/form-responses-presentation"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,

@@ -1,8 +1,7 @@
 import { useQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 
-import { AppShell } from "@/components/app-shell"
-import { FormResponsesView } from "@/components/form-responses-view"
+import { FormResponsesView } from "@/components/form/form-responses-view"
 import { formResponsesPageQueryOptions } from "@/lib/query-options"
 import { formResponsesSearchSchema } from "@/lib/router-search-schemas"
 import { requireSession } from "@/lib/route-guards"
@@ -42,38 +41,30 @@ function FormResponsesPage() {
   })
 
   if (!data) {
-    return (
-      <AppShell>
-        <p className="text-sm text-muted-foreground">Loading…</p>
-      </AppShell>
-    )
+    return <p className="text-sm text-muted-foreground">Loading…</p>
   }
 
   if (data.formRes.ok && data.formRes.surveyId !== surveyId) {
     return (
-      <AppShell>
-        <p className="text-sm text-destructive">
-          This form does not belong to this survey.
-        </p>
-      </AppShell>
+      <p className="text-sm text-destructive">
+        This form does not belong to this survey.
+      </p>
     )
   }
 
   return (
-    <AppShell>
-      <FormResponsesView
-        surveyId={surveyId}
-        formId={formId}
-        data={data}
-        listFetching={isFetching}
-        highlightResponseId={search.highlightResponse}
-        responsesList={{
-          q: search.rq,
-          offset: search.roffset,
-          limit: search.rlimit,
-          highlightResponse: search.highlightResponse,
-        }}
-      />
-    </AppShell>
+    <FormResponsesView
+      surveyId={surveyId}
+      formId={formId}
+      data={data}
+      listFetching={isFetching}
+      highlightResponseId={search.highlightResponse}
+      responsesList={{
+        q: search.rq,
+        offset: search.roffset,
+        limit: search.rlimit,
+        highlightResponse: search.highlightResponse,
+      }}
+    />
   )
 }

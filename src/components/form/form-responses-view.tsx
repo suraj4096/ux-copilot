@@ -7,8 +7,8 @@ import { LayoutGrid, Table2 } from "lucide-react"
 import * as React from "react"
 
 import type { FormResponsesPageQueryData } from "@/lib/query-options"
-import { FormResponsesCards } from "@/components/form-responses-cards"
-import { FormResponsesTable } from "@/components/form-responses-table"
+import { FormResponsesCards } from "@/components/form/form-responses-cards"
+import { FormResponsesTable } from "@/components/form/form-responses-table"
 import {
   DebouncedSearchField,
   OffsetPaginationBar,

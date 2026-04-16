@@ -1,7 +1,7 @@
 import * as React from "react"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 
-import { AppNavbar } from "@/components/app-navbar"
+import { AppNavbar } from "@/components/layout/app-navbar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"

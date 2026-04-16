@@ -3,7 +3,7 @@
 import * as React from "react"
 
 import type { FormSchema } from "@/lib/forms/types"
-import { FormRenderer } from "@/components/forms/form-renderer"
+import { FormRenderer } from "@/components/form/form-renderer"
 
 export function PublicFormPage({
   formId,

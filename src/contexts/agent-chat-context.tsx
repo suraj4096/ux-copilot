@@ -14,98 +14,10 @@ import {
   isOpenFormEditorOk,
 } from "@/lib/ai/client/apply-open-form-editor"
 import { lastOpenFormEditorInvocation } from "@/lib/ai/client/extract-open-form-editor-output"
-import { listMermaidGenerationsFromMessages } from "@/lib/draw/extract-mermaid"
 
 type AgentChatContextValue = ReturnType<typeof useChat>
 
 const AgentChatContext = React.createContext<AgentChatContextValue | null>(null)
-
-export type DrawDiagramRequestContextPayload = {
-  generationNumber: number
-  mermaid: string
-} | null
-
-type DrawDiagramHistoryContextValue = {
-  generations: Array<{ id: number; mermaid: string }>
-  selectedGenerationId: number | null
-  setSelectedGenerationId: (id: number | null) => void
-  displayedMermaid: string | null
-}
-
-const DrawDiagramHistoryContext =
-  React.createContext<DrawDiagramHistoryContextValue | null>(null)
-
-function DrawDiagramHistorySync({
-  diagramContextRef,
-  children,
-}: {
-  diagramContextRef: React.MutableRefObject<DrawDiagramRequestContextPayload>
-  children: React.ReactNode
-}) {
-  const chat = React.useContext(AgentChatContext)
-  if (!chat) {
-    throw new Error(
-      "DrawDiagramHistorySync must be used within AgentChatContext.Provider",
-    )
-  }
-  const { messages } = chat
-  const generations = React.useMemo(
-    () => listMermaidGenerationsFromMessages(messages),
-    [messages],
-  )
-
-  const [selectedGenerationId, setSelectedGenerationId] = React.useState<
-    number | null
-  >(null)
-
-  const prevGenCountRef = React.useRef(0)
-  React.useEffect(() => {
-    if (generations.length > prevGenCountRef.current) {
-      setSelectedGenerationId(null)
-    }
-    prevGenCountRef.current = generations.length
-  }, [generations.length])
-
-  const latestId = generations.at(-1)?.id ?? null
-  const validSelected =
-    selectedGenerationId != null &&
-    generations.some((g) => g.id === selectedGenerationId)
-      ? selectedGenerationId
-      : null
-
-  const displayedMermaid =
-    validSelected != null
-      ? (generations.find((g) => g.id === validSelected)?.mermaid ?? null)
-      : (latestId != null
-          ? generations.find((g) => g.id === latestId)?.mermaid ?? null
-          : null)
-
-  React.useLayoutEffect(() => {
-    const latest = generations.at(-1)
-    if (!displayedMermaid || !latest) {
-      diagramContextRef.current = null
-      return
-    }
-    const generationNumber = validSelected ?? latest.id
-    diagramContextRef.current = { generationNumber, mermaid: displayedMermaid }
-  }, [diagramContextRef, displayedMermaid, validSelected, generations])
-
-  const value = React.useMemo(
-    () => ({
-      generations,
-      selectedGenerationId: validSelected,
-      setSelectedGenerationId,
-      displayedMermaid,
-    }),
-    [generations, validSelected, displayedMermaid],
-  )
-
-  return (
-    <DrawDiagramHistoryContext.Provider value={value}>
-      {children}
-    </DrawDiagramHistoryContext.Provider>
-  )
-}
 
 const AgentClientUiContext =
   React.createContext<
@@ -152,6 +64,7 @@ export function WorkspaceAgentRuntimeProvider({
           messages,
           trigger,
           messageId,
+          mode: "survey",
           clientContext: clientContextRef.current,
         },
       }),
@@ -177,73 +90,12 @@ export function WorkspaceAgentRuntimeProvider({
   )
 }
 
-export function DrawAgentRuntimeProvider({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  const [, setClientContext] =
-    React.useState<AgentClientContext>(emptyClientContext)
-
-  const diagramContextRef = React.useRef<DrawDiagramRequestContextPayload>(null)
-
-  const chat = useChat({
-    id: "draw-user-flow",
-    transport: new DefaultChatTransport({
-      api: "/api/chat/draw",
-      credentials: "include",
-      prepareSendMessagesRequest: ({
-        body,
-        messages,
-        id,
-        trigger,
-        messageId,
-      }) => ({
-        body: {
-          ...body,
-          id,
-          messages,
-          trigger,
-          messageId,
-          diagramContext: diagramContextRef.current,
-        },
-      }),
-    }),
-  })
-
-  return (
-    <AgentClientUiContext.Provider value={setClientContext}>
-      <AgentChatContext.Provider value={chat}>
-        <DrawDiagramHistorySync diagramContextRef={diagramContextRef}>
-          {children}
-        </DrawDiagramHistorySync>
-      </AgentChatContext.Provider>
-    </AgentClientUiContext.Provider>
-  )
-}
-
 export function useAgentChat() {
   const ctx = React.useContext(AgentChatContext)
   if (!ctx) {
-    throw new Error(
-      "useAgentChat must be used within WorkspaceAgentRuntimeProvider or DrawAgentRuntimeProvider",
-    )
+    throw new Error("useAgentChat must be used within WorkspaceAgentRuntimeProvider")
   }
   return ctx
-}
-
-export function useDrawDiagramHistory() {
-  const ctx = React.useContext(DrawDiagramHistoryContext)
-  if (!ctx) {
-    throw new Error(
-      "useDrawDiagramHistory must be used within DrawAgentRuntimeProvider",
-    )
-  }
-  return ctx
-}
-
-export function useDrawDiagramHistoryOptional() {
-  return React.useContext(DrawDiagramHistoryContext)
 }
 
 export function useSetAgentClientContext() {
@@ -262,7 +114,6 @@ export function deriveAgentRouteKind(
   const p = pathname.replace(/\/$/, "") || "/"
   if (p === "/") return "home"
   if (p === "/login") return "login"
-  if (p === "/draw") return "draw"
   if (p.startsWith("/f/")) return "public-form"
   if (p === "/surveys") return "surveys-list"
   if (/^\/surveys\/[^/]+\/form\/[^/]+$/.test(p)) return "form-detail"

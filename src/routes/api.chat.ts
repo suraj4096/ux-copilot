@@ -13,10 +13,15 @@ export const Route = createFileRoute("/api/chat")({
           return new Response("Unauthorized", { status: 401 })
         }
 
-        let body: { messages?: Array<UIMessage>; clientContext?: unknown }
+        let body: {
+          messages?: Array<UIMessage>
+          mode?: unknown
+          clientContext?: unknown
+        }
         try {
           body = (await request.json()) as {
             messages?: Array<UIMessage>
+            mode?: unknown
             clientContext?: unknown
           }
         } catch {
@@ -32,6 +37,7 @@ export const Route = createFileRoute("/api/chat")({
           const result = await runAgentChatStream({
             messages,
             ownerEmail: user.email,
+            mode: body.mode,
             clientContext: body.clientContext,
           })
           return result.toUIMessageStreamResponse()

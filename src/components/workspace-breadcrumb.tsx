@@ -24,7 +24,6 @@ type ParsedPath =
   | { kind: "survey"; surveyId: string }
   | { kind: "newForm"; surveyId: string }
   | { kind: "form"; surveyId: string; formId: string }
-  | { kind: "draw" }
   | { kind: "other" }
 
 function coerceSearchRecord(search: unknown): Record<string, unknown> {
@@ -41,7 +40,6 @@ function coerceSearchRecord(search: unknown): Record<string, unknown> {
 function parseWorkspacePath(pathname: string): ParsedPath {
   const norm = pathname.replace(/\/+$/, "") || "/"
   const seg = norm.split("/").filter(Boolean)
-  if (seg[0] === "draw" && seg.length === 1) return { kind: "draw" }
   if (seg[0] !== "surveys") return { kind: "other" }
   if (seg.length === 1) return { kind: "list" }
   const surveyId = seg[1]
@@ -106,16 +104,6 @@ export function WorkspaceBreadcrumb({ className }: { className?: string }) {
         className={cn("min-w-0 truncate text-sm font-medium text-foreground", className)}
       >
         Surveys
-      </span>
-    )
-  }
-
-  if (parsed.kind === "draw") {
-    return (
-      <span
-        className={cn("min-w-0 truncate text-sm font-medium text-foreground", className)}
-      >
-        Draw
       </span>
     )
   }

@@ -1,11 +1,9 @@
 "use client"
 
 import { useRouterState } from "@tanstack/react-router"
-import { PanelRightClose, PanelRightOpen } from "lucide-react"
 
 import { NewSurveyDialog } from "@/components/new-survey-dialog"
 import { WorkspaceBreadcrumb } from "@/components/workspace-breadcrumb"
-import { Button } from "@/components/ui/button"
 
 function isSurveysWorkspacePath(pathname: string) {
   return (
@@ -15,13 +13,7 @@ function isSurveysWorkspacePath(pathname: string) {
   )
 }
 
-export function WorkspaceTopBar({
-  agentVisible,
-  onToggleAgent,
-}: {
-  agentVisible: boolean
-  onToggleAgent: () => void
-}) {
+export function WorkspaceTopBar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const showSurveyNew = isSurveysWorkspacePath(pathname)
 
@@ -32,21 +24,6 @@ export function WorkspaceTopBar({
         {showSurveyNew ? (
           <NewSurveyDialog triggerSize="sm">+ New</NewSurveyDialog>
         ) : null}
-        <Button
-          type="button"
-          variant="outline"
-          size="icon-sm"
-          onClick={onToggleAgent}
-          aria-pressed={agentVisible}
-          aria-label={agentVisible ? "Hide assistant" : "Show assistant"}
-          title={agentVisible ? "Hide assistant" : "Show assistant"}
-        >
-          {agentVisible ? (
-            <PanelRightClose className="size-4" aria-hidden />
-          ) : (
-            <PanelRightOpen className="size-4" aria-hidden />
-          )}
-        </Button>
       </div>
     </div>
   )

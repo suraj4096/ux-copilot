@@ -1,13 +1,19 @@
 import * as React from "react"
-import { useServerFn } from "@tanstack/react-start"
-import { useRouterState } from "@tanstack/react-router"
+import { useQuery } from "@tanstack/react-query"
 
-import { getCurrentUserFn } from "@/lib/auth.functions"
+import { currentUserQueryOptions } from "@/lib/query-options"
+import { parseNameFromEmail } from "@/lib/user-identity"
 
 type AuthUser = { email: string }
 
+type AuthIdentity = {
+  email: string
+  name: string
+}
+
 type AuthContextValue = {
   user: AuthUser | null
+  identity: AuthIdentity | null
   isLoading: boolean
   refetch: () => Promise<void>
 }
@@ -15,27 +21,25 @@ type AuthContextValue = {
 const AuthContext = React.createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const getCurrentUser = useServerFn(getCurrentUserFn)
-  const locationKey = useRouterState({ select: (s) => s.location.href })
-  const [user, setUser] = React.useState<AuthUser | null>(null)
-  const [isLoading, setIsLoading] = React.useState(true)
+  const userQuery = useQuery(currentUserQueryOptions())
+  const user = (userQuery.data ?? null) as AuthUser | null
+
+  const identity = React.useMemo(() => {
+    if (!user) return null
+    return {
+      email: user.email,
+      name: parseNameFromEmail(user.email),
+    }
+  }, [user])
 
   const refetch = React.useCallback(async () => {
-    setIsLoading(true)
-    try {
-      const next = await getCurrentUser()
-      setUser(next)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [getCurrentUser])
-
-  React.useEffect(() => {
-    void refetch()
-  }, [refetch, locationKey])
+    await userQuery.refetch()
+  }, [userQuery])
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, refetch }}>
+    <AuthContext.Provider
+      value={{ user, identity, isLoading: userQuery.isPending, refetch }}
+    >
       {children}
     </AuthContext.Provider>
   )
