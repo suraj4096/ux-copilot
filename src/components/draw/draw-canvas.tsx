@@ -5,6 +5,19 @@ import * as go from "gojs"
 import type { ObjectData } from "gojs"
 import { ReactDiagram } from "gojs-react"
 
+function figureForKind(kind: unknown): string {
+  switch (kind) {
+    case "start":
+    case "end":
+      return "Capsule"
+    case "decision":
+      return "Diamond"
+    case "action":
+    default:
+      return "RoundedRectangle"
+  }
+}
+
 function initDiagram() {
   const $ = go.GraphObject.make
 
@@ -15,7 +28,8 @@ function initDiagram() {
       layout: $(go.LayeredDigraphLayout, { direction: 0, layerSpacing: 42 }),
       "clickCreatingTool.archetypeNodeData": {
         text: "New node",
-        color: "oklch(0.97 0 0)",
+        color: "#E5E7EB",
+        kind: "action",
       },
       model: $(go.GraphLinksModel, {
         linkKeyProperty: "key",
@@ -32,28 +46,50 @@ function initDiagram() {
       "RoundedRectangle",
       {
         name: "SHAPE",
-        fill: "white",
-        stroke: "rgba(0,0,0,0.15)",
+        fill: "#E5E7EB",
+        stroke: "rgba(17,24,39,0.18)",
         strokeWidth: 1,
         portId: "",
         fromLinkable: true,
         toLinkable: true,
         cursor: "pointer",
       },
+      new go.Binding("figure", "kind", figureForKind),
       new go.Binding("fill", "color"),
     ),
     $(
       go.TextBlock,
-      { margin: 10, editable: true, font: "500 13px Inter, system-ui" },
+      {
+        margin: 10,
+        editable: true,
+        font: "500 13px Inter, system-ui",
+        stroke: "#111827",
+        wrap: go.TextBlock.WrapFit,
+        maxSize: new go.Size(200, NaN),
+        textAlign: "center",
+      },
       new go.Binding("text").makeTwoWay(),
     ),
   )
 
   diagram.linkTemplate = $(
     go.Link,
-    { routing: go.Routing.AvoidsNodes, curve: go.Curve.JumpOver },
-    $(go.Shape, { stroke: "rgba(0,0,0,0.35)" }),
-    $(go.Shape, { toArrow: "Standard", stroke: null, fill: "rgba(0,0,0,0.35)" }),
+    { routing: go.Routing.AvoidsNodes, curve: go.Curve.JumpOver, corner: 12 },
+    $(go.Shape, { stroke: "rgba(17,24,39,0.35)" }),
+    $(go.Shape, {
+      toArrow: "Standard",
+      stroke: null,
+      fill: "rgba(17,24,39,0.35)",
+    }),
+    $(
+      go.TextBlock,
+      {
+        segmentOffset: new go.Point(0, -10),
+        font: "500 11px Inter, system-ui",
+        stroke: "rgba(17,24,39,0.8)",
+      },
+      new go.Binding("text", "text"),
+    ),
   )
 
   return diagram
@@ -68,30 +104,22 @@ export function DrawCanvas({
 }) {
   const [skipsDiagramUpdate, setSkipsDiagramUpdate] = React.useState(false)
 
+  const [nodeDataArray, setNodeDataArray] = React.useState<Array<ObjectData>>([])
+  const [linkDataArray, setLinkDataArray] = React.useState<Array<ObjectData>>([])
+  const [modelData, setModelData] = React.useState<ObjectData>({})
+
   React.useEffect(() => {
-    if (!initialDiagram || typeof initialDiagram !== "object") return
+    if (!initialDiagram || typeof initialDiagram !== "object") {
+      setNodeDataArray([])
+      setLinkDataArray([])
+      setModelData({})
+      return
+    }
     const d = initialDiagram as any
-    if (Array.isArray(d.nodeDataArray)) setNodeDataArray(d.nodeDataArray)
-    if (Array.isArray(d.linkDataArray)) setLinkDataArray(d.linkDataArray)
-    if (d.modelData && typeof d.modelData === "object") setModelData(d.modelData)
+    setNodeDataArray(Array.isArray(d.nodeDataArray) ? d.nodeDataArray : [])
+    setLinkDataArray(Array.isArray(d.linkDataArray) ? d.linkDataArray : [])
+    setModelData(d.modelData && typeof d.modelData === "object" ? d.modelData : {})
   }, [diagramKey, initialDiagram])
-
-  const [nodeDataArray, setNodeDataArray] = React.useState<Array<ObjectData>>([
-    { key: 0, text: "Idea", color: "oklch(0.97 0 0)", loc: "0 0" },
-    { key: 1, text: "Flow", color: "oklch(0.97 0 0)", loc: "180 0" },
-    { key: 2, text: "UI", color: "oklch(0.97 0 0)", loc: "0 140" },
-    { key: 3, text: "Ship", color: "oklch(0.97 0 0)", loc: "180 140" },
-  ])
-
-  const [linkDataArray, setLinkDataArray] = React.useState<Array<ObjectData>>([
-    { key: -1, from: 0, to: 1 },
-    { key: -2, from: 0, to: 2 },
-    { key: -3, from: 2, to: 3 },
-  ])
-
-  const [modelData, setModelData] = React.useState<ObjectData>({
-    canRelink: true,
-  })
 
   const onModelChange = React.useCallback((obj: unknown) => {
     // eslint-disable-next-line no-console
@@ -149,7 +177,7 @@ export function DrawCanvas({
   }, [])
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
+    <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
       <ReactDiagram
         initDiagram={initDiagram}
         key={diagramKey}
@@ -160,6 +188,14 @@ export function DrawCanvas({
         onModelChange={onModelChange}
         skipsDiagramUpdate={skipsDiagramUpdate}
       />
+      {nodeDataArray.length === 0 ? (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div className="max-w-md rounded-xl border bg-background/80 p-4 text-center text-sm text-muted-foreground shadow-sm backdrop-blur">
+            No diagram loaded yet. Ask the agent in <span className="font-medium">Draw</span>{" "}
+            mode to generate a user-flow diagram.
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

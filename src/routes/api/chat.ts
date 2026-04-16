@@ -37,6 +37,8 @@ export const Route = createFileRoute("/api/chat")({
         }
 
         try {
+          // eslint-disable-next-line no-console
+          console.log("[api/chat] incoming mode", body.mode)
           const result = await runAgentChatStream({
             messages,
             ownerEmail: user.email,

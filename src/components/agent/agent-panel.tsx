@@ -6,6 +6,7 @@ import { ChevronDown, ChevronRight, Wrench } from "lucide-react"
 
 import { AgentInput } from "@/components/agent/agent-input"
 import { Markdown } from "@/components/markdown"
+import { Spinner } from "@/components/ui/spinner"
 import { useAuth } from "@/contexts/auth-context"
 import { useAgentRuntime } from "@/contexts/agent-context"
 import { greetingByHour } from "@/lib/user-identity"
@@ -18,6 +19,8 @@ export function AgentPanel({ className }: { className?: string }) {
   const [expandedTools, setExpandedTools] = React.useState<Set<string>>(
     () => new Set(),
   )
+  const [isThinking, setIsThinking] = React.useState(false)
+  const thinkingFromIndexRef = React.useRef(0)
 
   const greeting = greetingByHour(new Date())
   const name = identity?.name || "there"
@@ -31,6 +34,14 @@ export function AgentPanel({ className }: { className?: string }) {
       return next
     })
   }, [])
+
+  React.useEffect(() => {
+    if (!isThinking) return
+    const from = thinkingFromIndexRef.current
+    const newMessages = runtime.messages.slice(from)
+    const hasAssistantReply = newMessages.some((m) => m.role === "assistant")
+    if (hasAssistantReply) setIsThinking(false)
+  }, [isThinking, runtime.messages])
 
   return (
     <section
@@ -113,7 +124,7 @@ export function AgentPanel({ className }: { className?: string }) {
 
                                 return (
                                   <div
-                                    key={`${message.id}-tool-${toolCallId}`}
+                                    key={`${message.id}-tool-${toolCallId}-${idx}`}
                                     className="rounded-lg border bg-background/60"
                                   >
                                     <button
@@ -170,6 +181,15 @@ export function AgentPanel({ className }: { className?: string }) {
                       </div>
                     )
                   })}
+
+                  {isThinking ? (
+                    <div className="mr-auto flex max-w-[92%] flex-col gap-2 rounded-xl border-border bg-card px-4 py-3 text-sm">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Spinner className="size-4" aria-hidden />
+                        <span className="text-xs font-medium">Thinking…</span>
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               </div>
 
@@ -181,6 +201,8 @@ export function AgentPanel({ className }: { className?: string }) {
                   isDisabled={!draft.trim()}
                   onSubmit={() => {
                     if (!draft.trim()) return
+                    thinkingFromIndexRef.current = runtime.messages.length
+                    setIsThinking(true)
                     void runtime.sendMessage({ text: draft.trim() })
                     setDraft("")
                   }}

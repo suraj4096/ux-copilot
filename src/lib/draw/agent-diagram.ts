@@ -10,12 +10,12 @@ const allowedNodeKinds = ["start", "action", "decision", "end"] as const
 export type DrawNodeKind = (typeof allowedNodeKinds)[number]
 
 const allowedPalette = [
-  "#0f766e", // teal
-  "#0891b2", // cyan
-  "#2563eb", // blue
-  "#7c3aed", // violet
-  "#db2777", // pink
-  "#111827", // gray-900
+  "#A7F3D0", // mint
+  "#BAE6FD", // sky
+  "#C7D2FE", // indigo
+  "#FBCFE8", // pink
+  "#FDE68A", // amber
+  "#E5E7EB", // neutral
 ] as const
 
 function generateId(prefix: string): string {
@@ -70,10 +70,9 @@ export function validateAndNormalizeDrawDiagram(
   const nodes = raw.nodes.map((n) => {
     const id = n.id?.trim() ? n.id.trim() : generateId("n")
     idToNodeId.set(id, id)
+    const fallbackColor = defaultColorForKind(n.kind, id)
     const color =
-      typeof n.color === "string" && n.color.trim()
-        ? n.color.trim()
-        : allowedPalette[Math.abs(hashString(id)) % allowedPalette.length]
+      typeof n.color === "string" && n.color.trim() ? n.color.trim() : fallbackColor
     return {
       id,
       label: n.label.trim(),
@@ -127,6 +126,19 @@ export function validateAndNormalizeDrawDiagram(
 function normalizeColor(input: string): string {
   if (allowedPalette.includes(input as any)) return input
   return allowedPalette[0]
+}
+
+function defaultColorForKind(kind: DrawNodeKind, seed: string): string {
+  switch (kind) {
+    case "start":
+      return "#C7D2FE"
+    case "end":
+      return "#BAE6FD"
+    case "decision":
+      return "#FDE68A"
+    case "action":
+      return allowedPalette[Math.abs(hashString(seed)) % allowedPalette.length]
+  }
 }
 
 function hashString(s: string): number {

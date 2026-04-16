@@ -114,9 +114,13 @@ export async function runAgentChatStream(options: {
   currentContext?: AgentCurrentContext
 }) {
   const mode = normalizeAgentMode(options.mode)
+  // eslint-disable-next-line no-console
+  console.log("[runAgentChat] mode", mode)
   requireOpenAIApiKey()
   const model = createOpenAIModel(getAgentChatModelId())
   const tools = createAgentTools(options.ownerEmail, mode)
+  // eslint-disable-next-line no-console
+  console.log("[runAgentChat] tools", Object.keys(tools))
   const hasTools = Object.keys(tools).length > 0
 
   const windowedMessages = options.messages.slice(-5)

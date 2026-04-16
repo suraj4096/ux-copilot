@@ -89,6 +89,8 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
   currentContextRef.current = currentContext
   const isContextEnabledRef = React.useRef(isContextEnabled)
   isContextEnabledRef.current = isContextEnabled
+  const modeRef = React.useRef(mode)
+  modeRef.current = mode
 
   const runtime = useChat({
     id: "workspace-copilot",
@@ -108,17 +110,22 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
           messages: messages.slice(-5),
           trigger,
           messageId,
-          mode,
+          mode: modeRef.current,
           clientContext: clientContextRef.current,
           currentContext:
             isContextEnabledRef.current &&
-            isContextCompatibleWithMode(mode, currentContextRef.current)
+            isContextCompatibleWithMode(modeRef.current, currentContextRef.current)
               ? currentContextRef.current
               : null,
         },
       }),
     }),
   })
+
+  React.useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.log("[AgentMode] current mode state", mode)
+  }, [mode])
 
   React.useEffect(() => {
     const hit = lastOpenFormEditorInvocation(runtime.messages)
@@ -137,6 +144,8 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
     if (!hit) return
     if (appliedOpenFormEditorIdsRef.current.has(hit.toolCallId)) return
     if (!isOpenDrawEditorOk(hit.output)) return
+    // eslint-disable-next-line no-console
+    console.log("[AgentDraw] open_draw_editor output received", hit.output)
     appliedOpenFormEditorIdsRef.current.add(hit.toolCallId)
     void applyOpenDrawEditorResult(
       navigate as unknown as (opts: { to: "/draw"; search?: { draft?: string } }) => void,

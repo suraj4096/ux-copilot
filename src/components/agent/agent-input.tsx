@@ -15,6 +15,17 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu"
 
+function coerceAgentMode(value: unknown): ReturnType<typeof useAgentMode>["mode"] {
+  if (value === "auto" || value === "survey" || value === "draw") return value
+  if (value && typeof value === "object") {
+    const maybeValue = (value as any).value
+    if (maybeValue === "auto" || maybeValue === "survey" || maybeValue === "draw") {
+      return maybeValue
+    }
+  }
+  return "auto"
+}
+
 function labelForMode(mode: ReturnType<typeof useAgentMode>["mode"]): string {
   switch (mode) {
     case "auto":
@@ -79,7 +90,12 @@ export function AgentInput({
             <DropdownMenuContent className="w-40">
               <DropdownMenuRadioGroup
                 value={mode}
-                onValueChange={(value) => setMode(value as typeof mode)}
+                onValueChange={(value) => {
+                  const next = coerceAgentMode(value)
+                  // eslint-disable-next-line no-console
+                  console.log("[AgentMode] selected", value, "=>", next)
+                  setMode(next)
+                }}
               >
                 <DropdownMenuRadioItem value="auto">Auto</DropdownMenuRadioItem>
                 <DropdownMenuRadioItem value="survey">
