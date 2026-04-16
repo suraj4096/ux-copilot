@@ -63,28 +63,8 @@ export function FormBuilder({ className }: { className?: string }) {
   const { formApi, values, actions } = useFormBuilder()
 
   return (
-    <div className={cn("grid gap-4 md:grid-cols-[16rem_1fr]", className)}>
+    <div className={cn("grid gap-4 md:grid-cols-[1fr_16rem]", className)}>
       <FormBuilderDragLayer questions={values.questions} />
-      <aside className="self-start rounded-lg border bg-card p-3 text-card-foreground">
-        <div className="text-sm font-medium">Add form items</div>
-        <SidebarWithDeleteOverlay
-          onRemoveQuestion={actions.removeQuestionById}
-          className="mt-3"
-        >
-          <div className="flex flex-col gap-2">
-            {addQuestionOptions.map((opt) => (
-              <AddFormItemButton
-                key={opt.type}
-                icon={opt.icon}
-                label={opt.label}
-                questionType={opt.type}
-                onClick={() => actions.addQuestion(opt.type)}
-              />
-            ))}
-          </div>
-        </SidebarWithDeleteOverlay>
-      </aside>
-
       <section className="flex min-w-0 flex-col gap-4">
         <div className="mx-auto w-full max-w-2xl space-y-4">
           <div className="rounded-lg border bg-card p-4 text-card-foreground">
@@ -134,6 +114,26 @@ export function FormBuilder({ className }: { className?: string }) {
           </div>
         </div>
       </section>
+
+      <aside className="self-start rounded-lg border bg-card p-3 text-card-foreground">
+        <div className="text-sm font-medium">Add form items</div>
+        <SidebarWithDeleteOverlay
+          onRemoveQuestion={actions.removeQuestionById}
+          className="mt-3"
+        >
+          <div className="flex flex-col gap-2">
+            {addQuestionOptions.map((opt) => (
+              <AddFormItemButton
+                key={opt.type}
+                icon={opt.icon}
+                label={opt.label}
+                questionType={opt.type}
+                onClick={() => actions.addQuestion(opt.type)}
+              />
+            ))}
+          </div>
+        </SidebarWithDeleteOverlay>
+      </aside>
     </div>
   )
 }

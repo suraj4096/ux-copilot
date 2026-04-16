@@ -6,7 +6,7 @@ import { formResponsesPageQueryOptions } from "@/lib/query-options"
 import { formResponsesSearchSchema } from "@/lib/router-search-schemas"
 import { requireSession } from "@/lib/route-guards"
 
-export const Route = createFileRoute("/surveys/$surveyId/form/$formId/")({
+export const Route = createFileRoute("/_protected/surveys/$surveyId/form/$formId/")({
   validateSearch: (search: Record<string, unknown>) =>
     formResponsesSearchSchema.parse(search),
   beforeLoad: async ({ location }) => {
@@ -68,3 +68,4 @@ function FormResponsesPage() {
     />
   )
 }
+

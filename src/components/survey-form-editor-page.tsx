@@ -15,6 +15,8 @@ import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { createSurveyFormFn } from "@/lib/data.functions"
 import { formResponsesSearchDefaults } from "@/lib/router-search-defaults"
+import { useArtifactActions } from "@/components/artifact/artifact-actions-context"
+import { useAgentCurrentContext } from "@/contexts/agent-context"
 
 export function SurveyFormEditorPage({
   surveyId,
@@ -28,11 +30,18 @@ export function SurveyFormEditorPage({
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const createForm = useServerFn(createSurveyFormFn)
+  const { setActions, clearActions } = useArtifactActions()
+  const { setCurrentContext } = useAgentCurrentContext()
   const { values } = useFormBuilder()
   const [activeTab, setActiveTab] = React.useState("edit")
   const [clientValidationError, setClientValidationError] = React.useState<
     string | null
   >(null)
+
+  const valuesRef = React.useRef(values)
+  React.useEffect(() => {
+    valuesRef.current = values
+  }, [values])
 
   const saveMutation = useMutation({
     mutationFn: async (payload: FormSchema) => {
@@ -54,15 +63,19 @@ export function SurveyFormEditorPage({
     },
   })
 
-  function onSave() {
-    const parsed = validateFormSchema(values)
+  const mutateSave = saveMutation.mutate
+  const isSaving = saveMutation.isPending
+
+  const onSave = React.useCallback(() => {
+    const nextValues = valuesRef.current
+    const parsed = validateFormSchema(nextValues)
     if (!parsed.ok) {
       setClientValidationError(parsed.errors.join(" "))
       return
     }
     setClientValidationError(null)
-    saveMutation.mutate(values)
-  }
+    mutateSave(nextValues)
+  }, [mutateSave])
 
   const saveError =
     clientValidationError ??
@@ -75,8 +88,44 @@ export function SurveyFormEditorPage({
     Boolean(clonedFromFormId && !cloneError) ||
     Boolean(saveError)
 
+  const formContextJson = React.useMemo(() => {
+    try {
+      return JSON.stringify(values)
+    } catch {
+      return "{}"
+    }
+  }, [values])
+
+  React.useEffect(() => {
+    const screen = `survey/${surveyId}/form/new`
+    const context = `New form (draft JSON): ${formContextJson}`
+    setCurrentContext({ screen, context })
+    // eslint-disable-next-line no-console
+    console.log("[AgentContext] currentContext", { screen, context })
+  }, [formContextJson, setCurrentContext, surveyId])
+
+  React.useEffect(() => {
+    setActions(
+      <div className="flex items-center gap-2">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger value="edit">Edit</TabsTrigger>
+            <TabsTrigger value="preview">Preview</TabsTrigger>
+          </TabsList>
+        </Tabs>
+        <Separator orientation="vertical" className="hidden h-8 sm:block" />
+        <Button onClick={onSave} disabled={isSaving}>
+          {isSaving ? "Saving…" : "Save"}
+        </Button>
+      </div>,
+    )
+    return () => {
+      clearActions()
+    }
+  }, [activeTab, clearActions, isSaving, onSave, setActions])
+
   return (
-    <div className="flex min-h-0 flex-1 flex-col pb-24">
+    <div className="flex min-h-0 flex-1 flex-col">
       {cloneError ? (
         <div
           className="mt-3 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive"
@@ -109,34 +158,19 @@ export function SurveyFormEditorPage({
             <FormBuilder />
           </TabsContent>
           <TabsContent value="preview" className="h-full">
-            <div className="grid h-full min-h-0 gap-4 md:grid-cols-[16rem_1fr]">
-              <div
-                className="hidden self-start rounded-lg border border-transparent p-3 md:block"
-                aria-hidden
-              />
+            <div className="grid h-full min-h-0 gap-4 md:grid-cols-[1fr_16rem]">
               <section className="flex min-w-0 flex-col gap-4">
                 <div className="mx-auto w-full max-w-2xl">
                   <FormRenderer form={values} mode="preview" />
                 </div>
               </section>
+              <div
+                className="hidden self-start rounded-lg border border-transparent p-3 md:block"
+                aria-hidden
+              />
             </div>
           </TabsContent>
         </Tabs>
-      </div>
-
-      <div className="fixed inset-x-0 bottom-4 z-50">
-        <div className="mx-auto flex w-fit max-w-[calc(100vw-2rem)] flex-wrap items-center justify-center gap-2 rounded-full border bg-background/80 p-2 shadow-sm backdrop-blur-sm">
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList>
-              <TabsTrigger value="edit">Edit</TabsTrigger>
-              <TabsTrigger value="preview">Preview</TabsTrigger>
-            </TabsList>
-          </Tabs>
-          <Separator orientation="vertical" className="hidden h-8 sm:block" />
-          <Button onClick={onSave} disabled={saveMutation.isPending}>
-            {saveMutation.isPending ? "Saving…" : "Save"}
-          </Button>
-        </div>
       </div>
     </div>
   )

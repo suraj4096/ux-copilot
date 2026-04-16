@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { loginFn } from "@/lib/auth.functions"
 import { loginSearchSchema } from "@/lib/router-search-schemas"
 
-export const Route = createFileRoute("/login")({
+export const Route = createFileRoute("/login/")({
   validateSearch: (search: Record<string, unknown>) =>
     loginSearchSchema.parse(search),
   component: LoginPage,
@@ -92,3 +92,4 @@ function LoginPage() {
     </div>
   )
 }
+

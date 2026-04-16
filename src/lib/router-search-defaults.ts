@@ -1,4 +1,5 @@
 import {
+  drawSearchSchema,
   formResponsesSearchSchema,
   newFormSearchSchema,
   surveyDetailSearchSchema,
@@ -12,3 +13,5 @@ export const surveyDetailSearchDefaults = surveyDetailSearchSchema.parse({})
 export const formResponsesSearchDefaults = formResponsesSearchSchema.parse({})
 
 export const newFormSearchDefaults = newFormSearchSchema.parse({})
+
+export const drawSearchDefaults = drawSearchSchema.parse({})

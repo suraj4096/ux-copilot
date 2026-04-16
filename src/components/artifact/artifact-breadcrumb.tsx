@@ -21,6 +21,7 @@ import {
 
 type ParsedPath =
   | { kind: "list" }
+  | { kind: "draw" }
   | { kind: "survey"; surveyId: string }
   | { kind: "newForm"; surveyId: string }
   | { kind: "form"; surveyId: string; formId: string }
@@ -37,9 +38,10 @@ function coerceSearchRecord(search: unknown): Record<string, unknown> {
   return {}
 }
 
-function parseWorkspacePath(pathname: string): ParsedPath {
+function parseArtifactPath(pathname: string): ParsedPath {
   const norm = pathname.replace(/\/+$/, "") || "/"
   const seg = norm.split("/").filter(Boolean)
+  if (seg[0] === "draw") return { kind: "draw" }
   if (seg[0] !== "surveys") return { kind: "other" }
   if (seg.length === 1) return { kind: "list" }
   const surveyId = seg[1]
@@ -55,10 +57,10 @@ function parseWorkspacePath(pathname: string): ParsedPath {
 const backButtonClass =
   "inline-flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
 
-export function WorkspaceBreadcrumb({ className }: { className?: string }) {
+export function ArtifactBreadcrumb({ className }: { className?: string }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const rawSearch = useRouterState({ select: (s) => s.location.search })
-  const parsed = React.useMemo(() => parseWorkspacePath(pathname), [pathname])
+  const parsed = React.useMemo(() => parseArtifactPath(pathname), [pathname])
   const searchRecord = React.useMemo(
     () => coerceSearchRecord(rawSearch),
     [rawSearch],
@@ -101,9 +103,25 @@ export function WorkspaceBreadcrumb({ className }: { className?: string }) {
   if (parsed.kind === "list") {
     return (
       <span
-        className={cn("min-w-0 truncate text-sm font-medium text-foreground", className)}
+        className={cn(
+          "min-w-0 truncate text-sm font-medium text-foreground",
+          className,
+        )}
       >
         Surveys
+      </span>
+    )
+  }
+
+  if (parsed.kind === "draw") {
+    return (
+      <span
+        className={cn(
+          "min-w-0 truncate text-sm font-medium text-foreground",
+          className,
+        )}
+      >
+        Draw
       </span>
     )
   }
@@ -114,9 +132,7 @@ export function WorkspaceBreadcrumb({ className }: { className?: string }) {
         ? surveyDetailQuery.data.surveyRes.survey.title
         : null
     return (
-      <div
-        className={cn("flex min-w-0 items-center gap-1", className)}
-      >
+      <div className={cn("flex min-w-0 items-center gap-1", className)}>
         <Link
           to="/surveys"
           search={surveysListSearchDefaults}
@@ -175,10 +191,9 @@ export function WorkspaceBreadcrumb({ className }: { className?: string }) {
   }
 
   return (
-    <span
-      className={cn("min-w-0 truncate text-sm text-muted-foreground", className)}
-    >
+    <span className={cn("min-w-0 truncate text-sm text-muted-foreground", className)}>
       Breadcrumb placeholder
     </span>
   )
 }
+

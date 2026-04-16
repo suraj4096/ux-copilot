@@ -85,3 +85,13 @@ export const formResponsesSearchSchema = z.unknown().transform((raw) => {
     highlightResponse,
   }
 })
+
+export const drawSearchSchema = z.unknown().transform((raw) => {
+  const search = asRecord(raw)
+  return {
+    draft:
+      typeof search.draft === "string" && search.draft.trim()
+        ? search.draft.trim()
+        : undefined,
+  }
+})

@@ -4,7 +4,7 @@ import { createFileRoute } from "@tanstack/react-router"
 import { PublicFormPage } from "@/components/form/public-form-page"
 import { publicFormQueryOptions } from "@/lib/query-options"
 
-export const Route = createFileRoute("/f/$formId")({
+export const Route = createFileRoute("/f/$formId/")({
   loader: ({ context, params }) =>
     context.queryClient.ensureQueryData(publicFormQueryOptions(params.formId)),
   component: PublicFormRoute,
@@ -17,7 +17,9 @@ function PublicFormRoute() {
   if (!data.ok) {
     return (
       <div className="flex min-h-svh items-center justify-center bg-background p-4 text-foreground">
-        <p className="text-sm text-muted-foreground">This form is not available.</p>
+        <p className="text-sm text-muted-foreground">
+          This form is not available.
+        </p>
       </div>
     )
   }
@@ -28,3 +30,4 @@ function PublicFormRoute() {
     </div>
   )
 }
+

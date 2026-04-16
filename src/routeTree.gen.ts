@@ -9,162 +9,171 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as SurveysIndexRouteImport } from './routes/surveys.index'
-import { Route as FFormIdRouteImport } from './routes/f.$formId'
-import { Route as ApiChatRouteImport } from './routes/api.chat'
-import { Route as SurveysSurveyIdIndexRouteImport } from './routes/surveys.$surveyId.index'
-import { Route as SurveysSurveyIdFormIndexRouteImport } from './routes/surveys.$surveyId.form.index'
-import { Route as SurveysSurveyIdFormFormIdIndexRouteImport } from './routes/surveys.$surveyId.form.$formId.index'
+import { Route as ProtectedRouteImport } from './routes/_protected'
+import { Route as LoginIndexRouteImport } from './routes/login/index'
+import { Route as ProtectedIndexRouteImport } from './routes/_protected/index'
+import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as FFormIdIndexRouteImport } from './routes/f/$formId/index'
+import { Route as ProtectedSurveysIndexRouteImport } from './routes/_protected/surveys/index'
+import { Route as ProtectedDrawIndexRouteImport } from './routes/_protected/draw/index'
+import { Route as ProtectedSurveysSurveyIdIndexRouteImport } from './routes/_protected/surveys/$surveyId/index'
+import { Route as ProtectedSurveysSurveyIdFormIndexRouteImport } from './routes/_protected/surveys/$surveyId/form/index'
+import { Route as ProtectedSurveysSurveyIdFormFormIdIndexRouteImport } from './routes/_protected/surveys/$surveyId/form/$formId/index'
 
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
+const ProtectedRoute = ProtectedRouteImport.update({
+  id: '/_protected',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
+const LoginIndexRoute = LoginIndexRouteImport.update({
+  id: '/login/',
+  path: '/login/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProtectedIndexRoute = ProtectedIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SurveysIndexRoute = SurveysIndexRouteImport.update({
-  id: '/surveys/',
-  path: '/surveys/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FFormIdRoute = FFormIdRouteImport.update({
-  id: '/f/$formId',
-  path: '/f/$formId',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => ProtectedRoute,
 } as any)
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
   path: '/api/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SurveysSurveyIdIndexRoute = SurveysSurveyIdIndexRouteImport.update({
-  id: '/surveys/$surveyId/',
-  path: '/surveys/$surveyId/',
+const FFormIdIndexRoute = FFormIdIndexRouteImport.update({
+  id: '/f/$formId/',
+  path: '/f/$formId/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SurveysSurveyIdFormIndexRoute =
-  SurveysSurveyIdFormIndexRouteImport.update({
+const ProtectedSurveysIndexRoute = ProtectedSurveysIndexRouteImport.update({
+  id: '/surveys/',
+  path: '/surveys/',
+  getParentRoute: () => ProtectedRoute,
+} as any)
+const ProtectedDrawIndexRoute = ProtectedDrawIndexRouteImport.update({
+  id: '/draw/',
+  path: '/draw/',
+  getParentRoute: () => ProtectedRoute,
+} as any)
+const ProtectedSurveysSurveyIdIndexRoute =
+  ProtectedSurveysSurveyIdIndexRouteImport.update({
+    id: '/surveys/$surveyId/',
+    path: '/surveys/$surveyId/',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
+const ProtectedSurveysSurveyIdFormIndexRoute =
+  ProtectedSurveysSurveyIdFormIndexRouteImport.update({
     id: '/surveys/$surveyId/form/',
     path: '/surveys/$surveyId/form/',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => ProtectedRoute,
   } as any)
-const SurveysSurveyIdFormFormIdIndexRoute =
-  SurveysSurveyIdFormFormIdIndexRouteImport.update({
+const ProtectedSurveysSurveyIdFormFormIdIndexRoute =
+  ProtectedSurveysSurveyIdFormFormIdIndexRouteImport.update({
     id: '/surveys/$surveyId/form/$formId/',
     path: '/surveys/$surveyId/form/$formId/',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => ProtectedRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/login': typeof LoginRoute
+  '/': typeof ProtectedIndexRoute
   '/api/chat': typeof ApiChatRoute
-  '/f/$formId': typeof FFormIdRoute
-  '/surveys/': typeof SurveysIndexRoute
-  '/surveys/$surveyId/': typeof SurveysSurveyIdIndexRoute
-  '/surveys/$surveyId/form/': typeof SurveysSurveyIdFormIndexRoute
-  '/surveys/$surveyId/form/$formId/': typeof SurveysSurveyIdFormFormIdIndexRoute
+  '/login/': typeof LoginIndexRoute
+  '/draw/': typeof ProtectedDrawIndexRoute
+  '/surveys/': typeof ProtectedSurveysIndexRoute
+  '/f/$formId/': typeof FFormIdIndexRoute
+  '/surveys/$surveyId/': typeof ProtectedSurveysSurveyIdIndexRoute
+  '/surveys/$surveyId/form/': typeof ProtectedSurveysSurveyIdFormIndexRoute
+  '/surveys/$surveyId/form/$formId/': typeof ProtectedSurveysSurveyIdFormFormIdIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/login': typeof LoginRoute
   '/api/chat': typeof ApiChatRoute
-  '/f/$formId': typeof FFormIdRoute
-  '/surveys': typeof SurveysIndexRoute
-  '/surveys/$surveyId': typeof SurveysSurveyIdIndexRoute
-  '/surveys/$surveyId/form': typeof SurveysSurveyIdFormIndexRoute
-  '/surveys/$surveyId/form/$formId': typeof SurveysSurveyIdFormFormIdIndexRoute
+  '/': typeof ProtectedIndexRoute
+  '/login': typeof LoginIndexRoute
+  '/draw': typeof ProtectedDrawIndexRoute
+  '/surveys': typeof ProtectedSurveysIndexRoute
+  '/f/$formId': typeof FFormIdIndexRoute
+  '/surveys/$surveyId': typeof ProtectedSurveysSurveyIdIndexRoute
+  '/surveys/$surveyId/form': typeof ProtectedSurveysSurveyIdFormIndexRoute
+  '/surveys/$surveyId/form/$formId': typeof ProtectedSurveysSurveyIdFormFormIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/login': typeof LoginRoute
+  '/_protected': typeof ProtectedRouteWithChildren
   '/api/chat': typeof ApiChatRoute
-  '/f/$formId': typeof FFormIdRoute
-  '/surveys/': typeof SurveysIndexRoute
-  '/surveys/$surveyId/': typeof SurveysSurveyIdIndexRoute
-  '/surveys/$surveyId/form/': typeof SurveysSurveyIdFormIndexRoute
-  '/surveys/$surveyId/form/$formId/': typeof SurveysSurveyIdFormFormIdIndexRoute
+  '/_protected/': typeof ProtectedIndexRoute
+  '/login/': typeof LoginIndexRoute
+  '/_protected/draw/': typeof ProtectedDrawIndexRoute
+  '/_protected/surveys/': typeof ProtectedSurveysIndexRoute
+  '/f/$formId/': typeof FFormIdIndexRoute
+  '/_protected/surveys/$surveyId/': typeof ProtectedSurveysSurveyIdIndexRoute
+  '/_protected/surveys/$surveyId/form/': typeof ProtectedSurveysSurveyIdFormIndexRoute
+  '/_protected/surveys/$surveyId/form/$formId/': typeof ProtectedSurveysSurveyIdFormFormIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/login'
     | '/api/chat'
-    | '/f/$formId'
+    | '/login/'
+    | '/draw/'
     | '/surveys/'
+    | '/f/$formId/'
     | '/surveys/$surveyId/'
     | '/surveys/$surveyId/form/'
     | '/surveys/$surveyId/form/$formId/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/api/chat'
     | '/'
     | '/login'
-    | '/api/chat'
-    | '/f/$formId'
+    | '/draw'
     | '/surveys'
+    | '/f/$formId'
     | '/surveys/$surveyId'
     | '/surveys/$surveyId/form'
     | '/surveys/$surveyId/form/$formId'
   id:
     | '__root__'
-    | '/'
-    | '/login'
+    | '/_protected'
     | '/api/chat'
-    | '/f/$formId'
-    | '/surveys/'
-    | '/surveys/$surveyId/'
-    | '/surveys/$surveyId/form/'
-    | '/surveys/$surveyId/form/$formId/'
+    | '/_protected/'
+    | '/login/'
+    | '/_protected/draw/'
+    | '/_protected/surveys/'
+    | '/f/$formId/'
+    | '/_protected/surveys/$surveyId/'
+    | '/_protected/surveys/$surveyId/form/'
+    | '/_protected/surveys/$surveyId/form/$formId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  LoginRoute: typeof LoginRoute
+  ProtectedRoute: typeof ProtectedRouteWithChildren
   ApiChatRoute: typeof ApiChatRoute
-  FFormIdRoute: typeof FFormIdRoute
-  SurveysIndexRoute: typeof SurveysIndexRoute
-  SurveysSurveyIdIndexRoute: typeof SurveysSurveyIdIndexRoute
-  SurveysSurveyIdFormIndexRoute: typeof SurveysSurveyIdFormIndexRoute
-  SurveysSurveyIdFormFormIdIndexRoute: typeof SurveysSurveyIdFormFormIdIndexRoute
+  LoginIndexRoute: typeof LoginIndexRoute
+  FFormIdIndexRoute: typeof FFormIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
+    '/_protected': {
+      id: '/_protected'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof ProtectedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
+    '/login/': {
+      id: '/login/'
+      path: '/login'
+      fullPath: '/login/'
+      preLoaderRoute: typeof LoginIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_protected/': {
+      id: '/_protected/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/surveys/': {
-      id: '/surveys/'
-      path: '/surveys'
-      fullPath: '/surveys/'
-      preLoaderRoute: typeof SurveysIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/f/$formId': {
-      id: '/f/$formId'
-      path: '/f/$formId'
-      fullPath: '/f/$formId'
-      preLoaderRoute: typeof FFormIdRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof ProtectedIndexRouteImport
+      parentRoute: typeof ProtectedRoute
     }
     '/api/chat': {
       id: '/api/chat'
@@ -173,39 +182,80 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/surveys/$surveyId/': {
-      id: '/surveys/$surveyId/'
+    '/f/$formId/': {
+      id: '/f/$formId/'
+      path: '/f/$formId'
+      fullPath: '/f/$formId/'
+      preLoaderRoute: typeof FFormIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_protected/surveys/': {
+      id: '/_protected/surveys/'
+      path: '/surveys'
+      fullPath: '/surveys/'
+      preLoaderRoute: typeof ProtectedSurveysIndexRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/draw/': {
+      id: '/_protected/draw/'
+      path: '/draw'
+      fullPath: '/draw/'
+      preLoaderRoute: typeof ProtectedDrawIndexRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/surveys/$surveyId/': {
+      id: '/_protected/surveys/$surveyId/'
       path: '/surveys/$surveyId'
       fullPath: '/surveys/$surveyId/'
-      preLoaderRoute: typeof SurveysSurveyIdIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof ProtectedSurveysSurveyIdIndexRouteImport
+      parentRoute: typeof ProtectedRoute
     }
-    '/surveys/$surveyId/form/': {
-      id: '/surveys/$surveyId/form/'
+    '/_protected/surveys/$surveyId/form/': {
+      id: '/_protected/surveys/$surveyId/form/'
       path: '/surveys/$surveyId/form'
       fullPath: '/surveys/$surveyId/form/'
-      preLoaderRoute: typeof SurveysSurveyIdFormIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof ProtectedSurveysSurveyIdFormIndexRouteImport
+      parentRoute: typeof ProtectedRoute
     }
-    '/surveys/$surveyId/form/$formId/': {
-      id: '/surveys/$surveyId/form/$formId/'
+    '/_protected/surveys/$surveyId/form/$formId/': {
+      id: '/_protected/surveys/$surveyId/form/$formId/'
       path: '/surveys/$surveyId/form/$formId'
       fullPath: '/surveys/$surveyId/form/$formId/'
-      preLoaderRoute: typeof SurveysSurveyIdFormFormIdIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof ProtectedSurveysSurveyIdFormFormIdIndexRouteImport
+      parentRoute: typeof ProtectedRoute
     }
   }
 }
 
+interface ProtectedRouteChildren {
+  ProtectedIndexRoute: typeof ProtectedIndexRoute
+  ProtectedDrawIndexRoute: typeof ProtectedDrawIndexRoute
+  ProtectedSurveysIndexRoute: typeof ProtectedSurveysIndexRoute
+  ProtectedSurveysSurveyIdIndexRoute: typeof ProtectedSurveysSurveyIdIndexRoute
+  ProtectedSurveysSurveyIdFormIndexRoute: typeof ProtectedSurveysSurveyIdFormIndexRoute
+  ProtectedSurveysSurveyIdFormFormIdIndexRoute: typeof ProtectedSurveysSurveyIdFormFormIdIndexRoute
+}
+
+const ProtectedRouteChildren: ProtectedRouteChildren = {
+  ProtectedIndexRoute: ProtectedIndexRoute,
+  ProtectedDrawIndexRoute: ProtectedDrawIndexRoute,
+  ProtectedSurveysIndexRoute: ProtectedSurveysIndexRoute,
+  ProtectedSurveysSurveyIdIndexRoute: ProtectedSurveysSurveyIdIndexRoute,
+  ProtectedSurveysSurveyIdFormIndexRoute:
+    ProtectedSurveysSurveyIdFormIndexRoute,
+  ProtectedSurveysSurveyIdFormFormIdIndexRoute:
+    ProtectedSurveysSurveyIdFormFormIdIndexRoute,
+}
+
+const ProtectedRouteWithChildren = ProtectedRoute._addFileChildren(
+  ProtectedRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  LoginRoute: LoginRoute,
+  ProtectedRoute: ProtectedRouteWithChildren,
   ApiChatRoute: ApiChatRoute,
-  FFormIdRoute: FFormIdRoute,
-  SurveysIndexRoute: SurveysIndexRoute,
-  SurveysSurveyIdIndexRoute: SurveysSurveyIdIndexRoute,
-  SurveysSurveyIdFormIndexRoute: SurveysSurveyIdFormIndexRoute,
-  SurveysSurveyIdFormFormIdIndexRoute: SurveysSurveyIdFormFormIdIndexRoute,
+  LoginIndexRoute: LoginIndexRoute,
+  FFormIdIndexRoute: FFormIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

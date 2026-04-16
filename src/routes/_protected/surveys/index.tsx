@@ -12,7 +12,7 @@ import { surveyDetailSearchDefaults } from "@/lib/router-search-defaults"
 import { surveysListSearchSchema } from "@/lib/router-search-schemas"
 import { requireSession } from "@/lib/route-guards"
 
-export const Route = createFileRoute("/surveys/")({
+export const Route = createFileRoute("/_protected/surveys/")({
   validateSearch: (search: Record<string, unknown>) =>
     surveysListSearchSchema.parse(search),
   beforeLoad: async ({ location }) => {
@@ -121,3 +121,4 @@ function SurveysPage() {
     </div>
   )
 }
+

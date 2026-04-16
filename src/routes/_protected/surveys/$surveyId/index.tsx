@@ -5,7 +5,7 @@ import { surveyDetailQueryOptions } from "@/lib/query-options"
 import { surveyDetailSearchSchema } from "@/lib/router-search-schemas"
 import { requireSession } from "@/lib/route-guards"
 
-export const Route = createFileRoute("/surveys/$surveyId/")({
+export const Route = createFileRoute("/_protected/surveys/$surveyId/")({
   validateSearch: (search: Record<string, unknown>) =>
     surveyDetailSearchSchema.parse(search),
   beforeLoad: async ({ location }) => {
@@ -42,3 +42,4 @@ function SurveyDetailPage() {
     />
   )
 }
+

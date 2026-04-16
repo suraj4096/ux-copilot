@@ -14,7 +14,7 @@ import { newFormCloneQueryOptions } from "@/lib/query-options"
 import { newFormSearchSchema } from "@/lib/router-search-schemas"
 import { requireSession } from "@/lib/route-guards"
 
-export const Route = createFileRoute("/surveys/$surveyId/form/")({
+export const Route = createFileRoute("/_protected/surveys/$surveyId/form/")({
   validateSearch: (search: Record<string, unknown>) =>
     newFormSearchSchema.parse(search),
   beforeLoad: async ({ location }) => {
@@ -73,3 +73,4 @@ function NewSurveyFormPage() {
     </FormBuilderProvider>
   )
 }
+

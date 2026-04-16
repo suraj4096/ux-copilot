@@ -14,10 +14,50 @@ import {
   isOpenFormEditorOk,
 } from "@/lib/ai/client/apply-open-form-editor"
 import { lastOpenFormEditorInvocation } from "@/lib/ai/client/extract-open-form-editor-output"
+import { applyOpenDrawEditorResult, isOpenDrawEditorOk } from "@/lib/ai/client/apply-open-draw-editor"
+import { lastOpenDrawEditorInvocation } from "@/lib/ai/client/extract-open-draw-editor-output"
 
-type AgentChatContextValue = ReturnType<typeof useChat>
+export type AgentRuntime = ReturnType<typeof useChat>
 
-const AgentChatContext = React.createContext<AgentChatContextValue | null>(null)
+export type AgentMode = "auto" | "survey" | "draw"
+
+export type AgentCurrentContext = {
+  screen: string
+  context: string
+}
+
+function isContextCompatibleWithMode(
+  mode: AgentMode,
+  ctx: AgentCurrentContext | null,
+): boolean {
+  if (!ctx) return false
+  if (mode === "auto") return true
+  const screen = ctx.screen.trim().toLowerCase()
+  const isSurveyDomain = screen === "survey" || screen.startsWith("survey/")
+  if (mode === "survey") return isSurveyDomain
+  if (mode === "draw") return !isSurveyDomain
+  return true
+}
+
+const AgentRuntimeContext = React.createContext<AgentRuntime | null>(null)
+
+const AgentModeContext = React.createContext<
+  { mode: AgentMode; setMode: (mode: AgentMode) => void } | null
+>(null)
+
+const AgentActionsContext = React.createContext<{ resetAgent: () => void } | null>(
+  null,
+)
+
+const AgentCurrentContextContext = React.createContext<
+  | {
+      isEnabled: boolean
+      currentContext: AgentCurrentContext | null
+      setCurrentContext: (value: AgentCurrentContext | null) => void
+      setEnabled: (value: boolean) => void
+    }
+  | null
+>(null)
 
 const AgentClientUiContext =
   React.createContext<
@@ -34,19 +74,23 @@ function emptyClientContext(): AgentClientContext {
   }
 }
 
-export function WorkspaceAgentRuntimeProvider({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export function AgentProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate()
   const appliedOpenFormEditorIdsRef = React.useRef(new Set<string>())
+  const [mode, setMode] = React.useState<AgentMode>("auto")
+  const [isContextEnabled, setIsContextEnabled] = React.useState(true)
+  const [currentContext, setCurrentContext] =
+    React.useState<AgentCurrentContext | null>(null)
   const [clientContext, setClientContext] =
     React.useState<AgentClientContext>(emptyClientContext)
   const clientContextRef = React.useRef(clientContext)
   clientContextRef.current = clientContext
+  const currentContextRef = React.useRef(currentContext)
+  currentContextRef.current = currentContext
+  const isContextEnabledRef = React.useRef(isContextEnabled)
+  isContextEnabledRef.current = isContextEnabled
 
-  const chat = useChat({
+  const runtime = useChat({
     id: "workspace-copilot",
     transport: new DefaultChatTransport({
       api: "/api/chat",
@@ -61,18 +105,23 @@ export function WorkspaceAgentRuntimeProvider({
         body: {
           ...body,
           id,
-          messages,
+          messages: messages.slice(-5),
           trigger,
           messageId,
-          mode: "survey",
+          mode,
           clientContext: clientContextRef.current,
+          currentContext:
+            isContextEnabledRef.current &&
+            isContextCompatibleWithMode(mode, currentContextRef.current)
+              ? currentContextRef.current
+              : null,
         },
       }),
     }),
   })
 
   React.useEffect(() => {
-    const hit = lastOpenFormEditorInvocation(chat.messages)
+    const hit = lastOpenFormEditorInvocation(runtime.messages)
     if (!hit) return
     if (appliedOpenFormEditorIdsRef.current.has(hit.toolCallId)) return
     if (!isOpenFormEditorOk(hit.output)) return
@@ -81,19 +130,88 @@ export function WorkspaceAgentRuntimeProvider({
       navigate as unknown as NavigateToAgentFormEditor,
       hit.output,
     )
-  }, [chat.messages, navigate])
+  }, [runtime.messages, navigate])
+
+  React.useEffect(() => {
+    const hit = lastOpenDrawEditorInvocation(runtime.messages)
+    if (!hit) return
+    if (appliedOpenFormEditorIdsRef.current.has(hit.toolCallId)) return
+    if (!isOpenDrawEditorOk(hit.output)) return
+    appliedOpenFormEditorIdsRef.current.add(hit.toolCallId)
+    void applyOpenDrawEditorResult(
+      navigate as unknown as (opts: { to: "/draw"; search?: { draft?: string } }) => void,
+      hit.output,
+    )
+  }, [runtime.messages, navigate])
+
+  const resetAgent = React.useCallback(() => {
+    appliedOpenFormEditorIdsRef.current.clear()
+    setMode("auto")
+    setIsContextEnabled(true)
+    setCurrentContext(null)
+    setClientContext(emptyClientContext())
+    try {
+      runtime.stop()
+    } catch {
+      // ignore
+    }
+    const maybeSetMessages = (runtime as unknown as { setMessages?: (m: Array<any>) => void })
+      .setMessages
+    if (typeof maybeSetMessages === "function") {
+      maybeSetMessages([])
+    }
+  }, [runtime])
 
   return (
-    <AgentClientUiContext.Provider value={setClientContext}>
-      <AgentChatContext.Provider value={chat}>{children}</AgentChatContext.Provider>
-    </AgentClientUiContext.Provider>
+    <AgentActionsContext.Provider value={{ resetAgent }}>
+      <AgentModeContext.Provider value={{ mode, setMode }}>
+        <AgentCurrentContextContext.Provider
+          value={{
+            isEnabled: isContextEnabled,
+            currentContext,
+            setCurrentContext,
+            setEnabled: setIsContextEnabled,
+          }}
+        >
+          <AgentClientUiContext.Provider value={setClientContext}>
+            <AgentRuntimeContext.Provider value={runtime}>
+              {children}
+            </AgentRuntimeContext.Provider>
+          </AgentClientUiContext.Provider>
+        </AgentCurrentContextContext.Provider>
+      </AgentModeContext.Provider>
+    </AgentActionsContext.Provider>
   )
 }
 
-export function useAgentChat() {
-  const ctx = React.useContext(AgentChatContext)
+export function useAgentRuntime() {
+  const ctx = React.useContext(AgentRuntimeContext)
   if (!ctx) {
-    throw new Error("useAgentChat must be used within WorkspaceAgentRuntimeProvider")
+    throw new Error("useAgentRuntime must be used within AgentProvider")
+  }
+  return ctx
+}
+
+export function useAgentMode() {
+  const ctx = React.useContext(AgentModeContext)
+  if (!ctx) {
+    throw new Error("useAgentMode must be used within AgentProvider")
+  }
+  return ctx
+}
+
+export function useAgentActions() {
+  const ctx = React.useContext(AgentActionsContext)
+  if (!ctx) {
+    throw new Error("useAgentActions must be used within AgentProvider")
+  }
+  return ctx
+}
+
+export function useAgentCurrentContext() {
+  const ctx = React.useContext(AgentCurrentContextContext)
+  if (!ctx) {
+    throw new Error("useAgentCurrentContext must be used within AgentProvider")
   }
   return ctx
 }
@@ -180,13 +298,9 @@ export function useSyncAgentClientContextState(input: {
       if (s !== "") params[k] = s
     }
 
-    const surveyId = Object.hasOwn(params, "surveyId")
-      ? params.surveyId
-      : undefined
+    const surveyId = Object.hasOwn(params, "surveyId") ? params.surveyId : undefined
     const formId = Object.hasOwn(params, "formId") ? params.formId : undefined
-    const surveyTitle = surveyId
-      ? readSurveyTitleFromCache(qc, surveyId)
-      : undefined
+    const surveyTitle = surveyId ? readSurveyTitleFromCache(qc, surveyId) : undefined
     const formTitle =
       surveyId && formId ? readFormTitleFromCache(qc, surveyId, formId) : undefined
 
@@ -215,12 +329,6 @@ export function useSyncAgentClientContextState(input: {
         agentDraftId,
       },
     })
-  }, [
-    qc,
-    setClientContext,
-    input.pathname,
-    input.search,
-    input.routeId,
-    input.params,
-  ])
+  }, [qc, setClientContext, input.pathname, input.search, input.routeId, input.params])
 }
+

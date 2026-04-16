@@ -1,4 +1,4 @@
-import { convertToModelMessages, stepCountIs, streamText } from "ai"
+import { convertToModelMessages, isTextUIPart, stepCountIs, streamText } from "ai"
 import type { UIMessage } from "ai"
 
 import {
@@ -19,6 +19,8 @@ import {
   type AgentMode,
 } from "@/lib/ai/server/agent-tools"
 
+type AgentCurrentContext = { screen: string; context: string } | null | undefined
+
 function normalizeAgentMode(mode: unknown): AgentMode {
   if (typeof mode !== "string") return "auto"
   const normalized = mode.trim().toLowerCase()
@@ -34,9 +36,42 @@ function formatToolAvailability(mode: AgentMode): string {
   return `Current agent mode: ${mode}. Available tools: ${namesText}.`
 }
 
+function uiMessageToText(message: UIMessage): string {
+  const parts = (message as any).parts ?? []
+  const text = Array.isArray(parts)
+    ? parts
+        .filter(isTextUIPart)
+        .map((p: any) => p.text)
+        .join("\n")
+    : ""
+  return text.trim()
+}
+
+function formatTranscriptBlock(messages: Array<UIMessage>): {
+  previous: string
+  current: string
+} {
+  if (messages.length === 0) return { previous: "(none)", current: "(none)" }
+  const prev = messages.slice(0, -1)
+  const cur = messages.at(-1)!
+  const prevLines = prev.length
+    ? prev
+        .map((m) => {
+          const t = uiMessageToText(m)
+          const short = t ? t : "(non-text message)"
+          return `- ${m.role}: ${short}`
+        })
+        .join("\n")
+    : "(none)"
+  const curText = uiMessageToText(cur) || "(non-text message)"
+  return { previous: prevLines, current: `${cur.role}: ${curText}` }
+}
+
 function buildSystemPrompt(options: {
   mode: AgentMode
   clientContext?: unknown
+  currentContext?: AgentCurrentContext
+  messages: Array<UIMessage>
 }): string {
   const modeLine = formatToolAvailability(options.mode)
 
@@ -45,7 +80,30 @@ function buildSystemPrompt(options: {
     ? `\n\n${formatAgentClientContextForSystem(parsed.data)}`
     : ""
 
-  return `${agentSystemPrompt}\n\n${modeLine}${contextSection}`
+  const currentContextSection =
+    options.currentContext && typeof options.currentContext === "object"
+      ? `\n\n## Current context\nscreen: ${options.currentContext.screen}\ncontext: ${options.currentContext.context}`
+      : "\n\n## Current context\n(none)"
+
+  const transcript = formatTranscriptBlock(options.messages)
+
+  return [
+    "## System prompt",
+    agentSystemPrompt,
+    "",
+    "## Tools",
+    modeLine,
+    contextSection.trim() ? `\n\n${contextSection.trim()}` : "",
+    currentContextSection,
+    "",
+    "## Previous messages (last 4)",
+    transcript.previous,
+    "",
+    "## Current message",
+    transcript.current,
+  ]
+    .filter(Boolean)
+    .join("\n")
 }
 
 export async function runAgentChatStream(options: {
@@ -53,19 +111,24 @@ export async function runAgentChatStream(options: {
   ownerEmail: string
   mode?: unknown
   clientContext?: unknown
+  currentContext?: AgentCurrentContext
 }) {
   const mode = normalizeAgentMode(options.mode)
   requireOpenAIApiKey()
   const model = createOpenAIModel(getAgentChatModelId())
   const tools = createAgentTools(options.ownerEmail, mode)
   const hasTools = Object.keys(tools).length > 0
+
+  const windowedMessages = options.messages.slice(-5)
   const messages = hasTools
-    ? await convertToModelMessages(options.messages, { tools })
-    : await convertToModelMessages(options.messages)
+    ? await convertToModelMessages(windowedMessages, { tools })
+    : await convertToModelMessages(windowedMessages)
 
   const system = buildSystemPrompt({
     mode,
     clientContext: options.clientContext,
+    currentContext: options.currentContext,
+    messages: windowedMessages,
   })
 
   if (!hasTools) {

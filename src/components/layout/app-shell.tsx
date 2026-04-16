@@ -3,13 +3,17 @@
 import * as React from "react"
 import { useRouterState } from "@tanstack/react-router"
 
-import { AgentShell } from "@/components/layout/agent-shell"
-import { AppNavRail } from "@/components/layout/app-nav-rail"
+import { AgentPanel } from "@/components/agent/agent-panel"
 import { AppNavbar } from "@/components/layout/app-navbar"
-import { AppSlot } from "@/components/layout/app-slot"
-import { WorkspaceTopBar } from "@/components/workspace-top-bar"
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable"
+import { ArtifactTopBar } from "@/components/artifact/artifact-top-bar"
+import { ArtifactActionsProvider } from "@/components/artifact/artifact-actions-context"
 
-export function AgenticShell({
+export function AppShell({
   children,
 }: {
   children: React.ReactNode
@@ -21,24 +25,48 @@ export function AgenticShell({
     <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden">
       <AppNavbar />
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        <AppNavRail />
         <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           {isHome ? (
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-              <AgentShell className="flex-1" />
+              <AgentPanel className="flex-1" />
             </div>
           ) : (
-            <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden lg:grid-cols-2">
-              <div className="min-h-0 border-b border-border lg:border-b-0 lg:border-r">
-                <AgentShell className="flex-1" />
+            <>
+              <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:hidden">
+                <AgentPanel className="min-h-0 flex-1 border-b border-border" />
+                <ArtifactActionsProvider>
+                  <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+                    <ArtifactTopBar />
+                    <div className="flex min-h-0 flex-1 flex-col overflow-auto p-2">
+                      <section className="min-h-0 flex-1 overflow-auto bg-background p-4 text-foreground">
+                        {children}
+                      </section>
+                    </div>
+                  </div>
+                </ArtifactActionsProvider>
               </div>
-              <div className="flex min-h-0 min-w-0 flex-col overflow-hidden">
-                <WorkspaceTopBar />
-                <div className="flex min-h-0 flex-1 flex-col overflow-auto p-2">
-                  <AppSlot>{children}</AppSlot>
-                </div>
+
+              <div className="hidden min-h-0 flex-1 overflow-hidden lg:flex">
+                <ResizablePanelGroup>
+                  <ResizablePanel defaultSize={46} minSize={28}>
+                    <AgentPanel className="flex-1" />
+                  </ResizablePanel>
+                  <ResizableHandle withHandle />
+                  <ResizablePanel defaultSize={54} minSize={32}>
+                    <ArtifactActionsProvider>
+                      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+                        <ArtifactTopBar />
+                        <div className="flex min-h-0 flex-1 flex-col overflow-auto p-2">
+                          <section className="min-h-0 flex-1 overflow-auto bg-background p-4 text-foreground">
+                            {children}
+                          </section>
+                        </div>
+                      </div>
+                    </ArtifactActionsProvider>
+                  </ResizablePanel>
+                </ResizablePanelGroup>
               </div>
-            </div>
+            </>
           )}
         </main>
       </div>

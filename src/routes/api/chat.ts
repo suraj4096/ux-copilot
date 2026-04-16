@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router"
 import type { UIMessage } from "ai"
 import { getUserFromAuthCookie } from "@/lib/auth.server"
 import { runAgentChatStream } from "@/lib/ai/server/run-agent-chat"
+import type { AgentCurrentContext } from "@/contexts/agent-context"
 
 export const Route = createFileRoute("/api/chat")({
   server: {
@@ -17,12 +18,14 @@ export const Route = createFileRoute("/api/chat")({
           messages?: Array<UIMessage>
           mode?: unknown
           clientContext?: unknown
+          currentContext?: AgentCurrentContext | null
         }
         try {
           body = (await request.json()) as {
             messages?: Array<UIMessage>
             mode?: unknown
             clientContext?: unknown
+            currentContext?: AgentCurrentContext | null
           }
         } catch {
           return new Response("Invalid JSON", { status: 400 })
@@ -39,6 +42,7 @@ export const Route = createFileRoute("/api/chat")({
             ownerEmail: user.email,
             mode: body.mode,
             clientContext: body.clientContext,
+            currentContext: body.currentContext,
           })
           return result.toUIMessageStreamResponse()
         } catch (err) {
@@ -55,3 +59,4 @@ export const Route = createFileRoute("/api/chat")({
     },
   },
 })
+
