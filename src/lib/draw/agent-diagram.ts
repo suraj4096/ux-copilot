@@ -52,7 +52,7 @@ const agentNodeSchema = z.object({
   label: z.string().trim().min(1).max(80),
   kind: z.enum(allowedNodeKinds),
   tone: z.enum(allowedTones).optional(),
-  color: z.string().trim().optional(),
+  color: z.string().trim().regex(/^#[0-9A-Fa-f]{6}$/, "must be a hex color like #RRGGBB").optional(),
 })
 
 const agentEdgeSchema = z.object({
@@ -193,6 +193,7 @@ export function validateAndNormalizeDrawDiagram(
 
 function normalizeColor(input: string): string {
   if (allowedPalette.includes(input as any)) return input
+  if (/^#[0-9A-Fa-f]{6}$/.test(input)) return input
   return "#E5E7EB"
 }
 

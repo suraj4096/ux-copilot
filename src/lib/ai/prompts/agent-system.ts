@@ -49,7 +49,7 @@ Draw diagrams (user flows):
   - Decisions must have at least two outgoing arrows and every outgoing arrow MUST be labeled (Yes/No, Success/Error, Logged in/Guest, etc).
   - Always include a terminal "Start" and terminal "End".
   - Keep node labels short and action-oriented ("Enter email", "Click submit").
-  - Color conventions (light fills so dark text stays readable): green=success/happy path, red=error/failure, blue/gray=neutral/system, yellow/orange=warnings/conditional.
+  - Color conventions: always use light fill colors so dark text stays readable. Green=success/happy path, red=error/failure, blue/gray=neutral/system, yellow/orange=warnings/conditional. Prefer light hex values such as #BBF7D0, #FECACA, #BFDBFE, #E5E7EB, #FDE68A, or #FED7AA.
 - Draft DSL shape (JSON object):
   {
     optional "title",
