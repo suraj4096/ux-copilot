@@ -2,7 +2,13 @@
 
 import * as React from "react"
 import { getToolName, isTextUIPart, isToolUIPart } from "ai"
-import { ChevronDown, ChevronRight, Wrench } from "lucide-react"
+import {
+  ChevronDown,
+  ChevronRight,
+  ClipboardList,
+  Pencil,
+  Wrench,
+} from "lucide-react"
 
 import { AgentInput } from "@/components/agent/agent-input"
 import { Markdown } from "@/components/markdown"
@@ -11,13 +17,16 @@ import { useAuth } from "@/contexts/auth-context"
 import { useAgentRuntime } from "@/contexts/agent-context"
 import { greetingByHour } from "@/lib/user-identity"
 import { cn } from "@/lib/utils"
+import { Link } from "@tanstack/react-router"
+import { buttonVariants } from "../ui/button"
+import { surveysListSearchDefaults } from "@/lib/router-search-defaults"
 
 export function AgentPanel({ className }: { className?: string }) {
   const runtime = useAgentRuntime()
   const { identity, isLoading } = useAuth()
   const [draft, setDraft] = React.useState("")
   const [expandedTools, setExpandedTools] = React.useState<Set<string>>(
-    () => new Set(),
+    () => new Set()
   )
   const [isThinking, setIsThinking] = React.useState(false)
   const thinkingFromIndexRef = React.useRef(0)
@@ -72,6 +81,25 @@ export function AgentPanel({ className }: { className?: string }) {
                   }}
                 />
               </div>
+
+              <div className="mt-12 flex max-w-2xl w-full justify-center gap-2">
+                <Link
+                  to="/surveys"
+                  search={surveysListSearchDefaults}
+                  className={buttonVariants({ variant: "outline" })}
+                >
+                  <ClipboardList className="size-3.5" aria-hidden />
+                  Survey
+                </Link>
+                <Link
+                  to="/draw"
+                  search={{ draft: undefined }}
+                  className={buttonVariants({ variant: "outline" })}
+                >
+                  <Pencil className="size-3.5" aria-hidden />
+                  Draw
+                </Link>
+              </div>
             </div>
           </div>
         ) : (
@@ -97,7 +125,7 @@ export function AgentPanel({ className }: { className?: string }) {
                           "flex max-w-[92%] flex-col gap-2 rounded-xl px-4 py-3 text-sm",
                           message.role === "user"
                             ? "ml-auto border-primary/20 bg-primary/10"
-                            : "mr-auto border-border bg-card",
+                            : "mr-auto border-border bg-card"
                         )}
                       >
                         {Array.isArray(parts)
@@ -110,7 +138,7 @@ export function AgentPanel({ className }: { className?: string }) {
                                   >
                                     <Markdown
                                       markdown={part.text}
-                                      className="prose-p:my-0 prose-ul:my-0 prose-ol:my-0"
+                                      className="prose-p:my-0 prose-ol:my-0 prose-ul:my-0"
                                     />
                                   </div>
                                 )
@@ -119,7 +147,8 @@ export function AgentPanel({ className }: { className?: string }) {
                               if (isToolUIPart(part)) {
                                 const toolName = getToolName(part)
                                 const toolCallId = part.toolCallId as string
-                                const isRunning = part.state !== "output-available"
+                                const isRunning =
+                                  part.state !== "output-available"
                                 const isExpanded = expandedTools.has(toolCallId)
 
                                 return (
@@ -140,7 +169,9 @@ export function AgentPanel({ className }: { className?: string }) {
                                         <div
                                           className={cn(
                                             "min-w-0 truncate text-xs font-medium text-muted-foreground",
-                                            isRunning ? "agent-tool-name-shimmer" : null,
+                                            isRunning
+                                              ? "agent-tool-name-shimmer"
+                                              : null
                                           )}
                                         >
                                           {toolName}
@@ -166,7 +197,11 @@ export function AgentPanel({ className }: { className?: string }) {
                                           </div>
                                         ) : (
                                           <pre className="max-h-64 overflow-auto rounded-md bg-muted/40 p-2 text-xs text-foreground">
-                                            {JSON.stringify(part.output ?? null, null, 2)}
+                                            {JSON.stringify(
+                                              part.output ?? null,
+                                              null,
+                                              2
+                                            )}
                                           </pre>
                                         )}
                                       </div>
