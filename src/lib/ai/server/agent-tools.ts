@@ -15,15 +15,13 @@ export const agentModes = ["auto", "survey", "draw"] as const
 export type AgentMode = (typeof agentModes)[number]
 
 export function listToolNamesForMode(mode: AgentMode): Array<string> {
-  if (mode === "survey" || mode === "auto") {
-    return [...surveyToolNames]
-  }
+  if (mode === "survey") return [...surveyToolNames]
   if (mode === "draw") return [...drawToolNames]
   return []
 }
 
 export function createAgentTools(ownerEmail: string, mode: AgentMode) {
-  if (mode === "survey" || mode === "auto") return createSurveyTools(ownerEmail)
+  if (mode === "survey") return createSurveyTools(ownerEmail)
   if (mode === "draw") return createDrawTools(ownerEmail)
   return {}
 }

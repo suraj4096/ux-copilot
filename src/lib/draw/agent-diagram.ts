@@ -6,17 +6,38 @@ import {
   type ValidationResult,
 } from "@/lib/forms/validator/result"
 
-const allowedNodeKinds = ["start", "action", "decision", "end"] as const
-export type DrawNodeKind = (typeof allowedNodeKinds)[number]
+const allowedNodeKinds = [
+  "terminal",
+  "process",
+  "decision",
+  "input_output",
+  "connector",
+  "document",
+  // legacy (accepted, normalized)
+  "start",
+  "end",
+  "action",
+] as const
+
+export type DrawNodeKind =
+  | "terminal"
+  | "process"
+  | "decision"
+  | "input_output"
+  | "connector"
+  | "document"
 
 const allowedPalette = [
-  "#A7F3D0", // mint
-  "#BAE6FD", // sky
-  "#C7D2FE", // indigo
-  "#FBCFE8", // pink
-  "#FDE68A", // amber
-  "#E5E7EB", // neutral
+  "#BBF7D0", // green (success)
+  "#FECACA", // red (error)
+  "#BFDBFE", // blue (neutral/system)
+  "#E5E7EB", // gray (neutral/system)
+  "#FDE68A", // yellow (warning/conditional)
+  "#FED7AA", // orange (warning/conditional)
 ] as const
+
+const allowedTones = ["success", "error", "neutral", "warning"] as const
+export type DrawTone = (typeof allowedTones)[number]
 
 function generateId(prefix: string): string {
   const uuid =
@@ -30,6 +51,7 @@ const agentNodeSchema = z.object({
   id: z.string().trim().min(1).optional(),
   label: z.string().trim().min(1).max(80),
   kind: z.enum(allowedNodeKinds),
+  tone: z.enum(allowedTones).optional(),
   color: z.string().trim().optional(),
 })
 
@@ -46,7 +68,13 @@ const agentDiagramSchema = z.object({
 })
 
 export type NormalizedGojsDiagram = {
-  nodeDataArray: Array<{ key: number; text: string; color: string; kind: DrawNodeKind }>
+  nodeDataArray: Array<{
+    key: number
+    text: string
+    color: string
+    kind: DrawNodeKind
+    tone?: DrawTone
+  }>
   linkDataArray: Array<{ key: number; from: number; to: number; text?: string }>
   modelData: { title?: string }
 }
@@ -70,13 +98,15 @@ export function validateAndNormalizeDrawDiagram(
   const nodes = raw.nodes.map((n) => {
     const id = n.id?.trim() ? n.id.trim() : generateId("n")
     idToNodeId.set(id, id)
-    const fallbackColor = defaultColorForKind(n.kind, id)
+    const normalizedKind = normalizeKind(n.kind, n.label)
+    const fallbackColor = defaultColorForKind(normalizedKind, n.tone, id)
     const color =
       typeof n.color === "string" && n.color.trim() ? n.color.trim() : fallbackColor
     return {
       id,
       label: n.label.trim(),
-      kind: n.kind,
+      kind: normalizedKind,
+      tone: n.tone,
       color: normalizeColor(color),
     }
   })
@@ -109,11 +139,49 @@ export function validateAndNormalizeDrawDiagram(
     })
   }
 
+  const startNode = nodes.find(
+    (n) => n.kind === "terminal" && n.label.trim().toLowerCase() === "start",
+  )
+  const endNode = nodes.find(
+    (n) => n.kind === "terminal" && n.label.trim().toLowerCase() === "end",
+  )
+  if (!startNode) {
+    return validationFailure([
+      `nodes: must include a terminal node labeled "Start".`,
+    ])
+  }
+  if (!endNode) {
+    return validationFailure([`nodes: must include a terminal node labeled "End".`])
+  }
+
+  const outgoingById = new Map<string, Array<{ label?: string }>>()
+  for (const e of edges) {
+    const arr = outgoingById.get(e.from) ?? []
+    arr.push({ label: e.label })
+    outgoingById.set(e.from, arr)
+  }
+  for (const n of nodes) {
+    if (n.kind !== "decision") continue
+    const outgoing = outgoingById.get(n.id) ?? []
+    if (outgoing.length < 2) {
+      return validationFailure([
+        `decision "${n.label}": must have at least two outgoing edges.`,
+      ])
+    }
+    const unlabeled = outgoing.find((o) => !(o.label && o.label.trim()))
+    if (unlabeled) {
+      return validationFailure([
+        `decision "${n.label}": every outgoing edge must have a label (e.g. Yes/No).`,
+      ])
+    }
+  }
+
   const nodeDataArray: NormalizedGojsDiagram["nodeDataArray"] = nodes.map((n) => ({
     key: keyById.get(n.id)!,
     text: n.label,
     color: n.color,
     kind: n.kind,
+    tone: n.tone,
   }))
 
   return validationOk({
@@ -125,18 +193,53 @@ export function validateAndNormalizeDrawDiagram(
 
 function normalizeColor(input: string): string {
   if (allowedPalette.includes(input as any)) return input
-  return allowedPalette[0]
+  return "#E5E7EB"
 }
 
-function defaultColorForKind(kind: DrawNodeKind, seed: string): string {
+function normalizeKind(rawKind: string, label: string): DrawNodeKind {
+  if (rawKind === "start" || rawKind === "end") return "terminal"
+  if (rawKind === "action") return "process"
+  if (rawKind === "terminal") return "terminal"
+  if (rawKind === "process") return "process"
+  if (rawKind === "decision") return "decision"
+  if (rawKind === "input_output") return "input_output"
+  if (rawKind === "connector") return "connector"
+  if (rawKind === "document") return "document"
+  const l = label.trim().toLowerCase()
+  if (l === "start" || l === "end") return "terminal"
+  return "process"
+}
+
+function defaultColorForKind(
+  kind: DrawNodeKind,
+  tone: DrawTone | undefined,
+  seed: string,
+): string {
+  if (tone) {
+    switch (tone) {
+      case "success":
+        return "#BBF7D0"
+      case "error":
+        return "#FECACA"
+      case "warning":
+        return "#FDE68A"
+      case "neutral":
+        return "#BFDBFE"
+    }
+  }
+
   switch (kind) {
-    case "start":
-      return "#C7D2FE"
-    case "end":
-      return "#BAE6FD"
+    case "terminal":
+      return "#E5E7EB"
     case "decision":
       return "#FDE68A"
-    case "action":
+    case "input_output":
+      return "#BFDBFE"
+    case "document":
+      return "#E5E7EB"
+    case "connector":
+      return "#E5E7EB"
+    case "process":
       return allowedPalette[Math.abs(hashString(seed)) % allowedPalette.length]
   }
 }

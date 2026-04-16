@@ -49,7 +49,7 @@ export function AppShell({
               <div className="hidden min-h-0 flex-1 overflow-hidden lg:flex">
                 <ResizablePanelGroup>
                   <ResizablePanel defaultSize={46} minSize={28}>
-                    <AgentPanel className="flex-1" />
+                    <AgentPanel className="h-full" />
                   </ResizablePanel>
                   <ResizableHandle withHandle />
                   <ResizablePanel defaultSize={54} minSize={32}>

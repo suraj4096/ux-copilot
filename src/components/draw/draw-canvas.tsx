@@ -7,12 +7,17 @@ import { ReactDiagram } from "gojs-react"
 
 function figureForKind(kind: unknown): string {
   switch (kind) {
-    case "start":
-    case "end":
+    case "terminal":
       return "Capsule"
     case "decision":
       return "Diamond"
-    case "action":
+    case "input_output":
+      return "Parallelogram"
+    case "connector":
+      return "Circle"
+    case "document":
+      return "Document"
+    case "process":
     default:
       return "RoundedRectangle"
   }

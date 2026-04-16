@@ -30,9 +30,12 @@ function normalizeAgentMode(mode: unknown): AgentMode {
   return "auto"
 }
 
-function formatToolAvailability(mode: AgentMode): string {
-  const names = listToolNamesForMode(mode)
+function formatToolAvailability(mode: AgentMode, routedMode: AgentMode): string {
+  const names = listToolNamesForMode(routedMode)
   const namesText = names.length > 0 ? names.join(", ") : "none"
+  if (mode === "auto") {
+    return `Current agent mode: auto (routed to ${routedMode}). Available tools: ${namesText}.`
+  }
   return `Current agent mode: ${mode}. Available tools: ${namesText}.`
 }
 
@@ -69,11 +72,12 @@ function formatTranscriptBlock(messages: Array<UIMessage>): {
 
 function buildSystemPrompt(options: {
   mode: AgentMode
+  routedMode: AgentMode
   clientContext?: unknown
   currentContext?: AgentCurrentContext
   messages: Array<UIMessage>
 }): string {
-  const modeLine = formatToolAvailability(options.mode)
+  const modeLine = formatToolAvailability(options.mode, options.routedMode)
 
   const parsed = agentClientContextSchema.safeParse(options.clientContext)
   const contextSection = parsed.success
@@ -114,11 +118,16 @@ export async function runAgentChatStream(options: {
   currentContext?: AgentCurrentContext
 }) {
   const mode = normalizeAgentMode(options.mode)
+  const routedMode = resolveAutoMode({
+    mode,
+    currentContext: options.currentContext,
+    messages: options.messages,
+  })
   // eslint-disable-next-line no-console
-  console.log("[runAgentChat] mode", mode)
+  console.log("[runAgentChat] mode", mode, "routedMode", routedMode)
   requireOpenAIApiKey()
   const model = createOpenAIModel(getAgentChatModelId())
-  const tools = createAgentTools(options.ownerEmail, mode)
+  const tools = createAgentTools(options.ownerEmail, routedMode)
   // eslint-disable-next-line no-console
   console.log("[runAgentChat] tools", Object.keys(tools))
   const hasTools = Object.keys(tools).length > 0
@@ -130,6 +139,7 @@ export async function runAgentChatStream(options: {
 
   const system = buildSystemPrompt({
     mode,
+    routedMode,
     clientContext: options.clientContext,
     currentContext: options.currentContext,
     messages: windowedMessages,
@@ -146,4 +156,30 @@ export async function runAgentChatStream(options: {
     tools,
     stopWhen: stepCountIs(getAgentMaxSteps()),
   })
+}
+
+function resolveAutoMode(options: {
+  mode: AgentMode
+  currentContext?: AgentCurrentContext
+  messages: Array<UIMessage>
+}): AgentMode {
+  if (options.mode !== "auto") return options.mode
+
+  const screen = options.currentContext?.screen?.trim().toLowerCase() ?? ""
+  if (screen === "draw" || screen.includes("draw")) return "draw"
+  if (screen === "survey" || screen.includes("survey") || screen.includes("form")) {
+    return "survey"
+  }
+
+  const latest = options.messages.at(-1)
+  const latestText = latest ? uiMessageToText(latest) : ""
+  const t = latestText.toLowerCase()
+
+  const looksLikeDrawIntent =
+    /\b(user flow|user-flow|flowchart|diagram|wireflow|draw|decision|diamond|start|end)\b/.test(
+      t,
+    ) || /\bvalidate_draw_json\b/.test(t)
+
+  if (looksLikeDrawIntent) return "draw"
+  return "survey"
 }
