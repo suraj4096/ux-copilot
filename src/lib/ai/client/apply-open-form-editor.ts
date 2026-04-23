@@ -8,53 +8,48 @@ export type NavigateToAgentFormEditor = (opts: {
 
 type OpenFormEditorOk = {
   ok: true
-  surveyId: string
-  cloneFromFormId: string | null
-  stagedForm: unknown | null
+  form: unknown | null
+  surveyId?: string | null
 }
 
 export function isOpenFormEditorOk(value: unknown): value is OpenFormEditorOk {
   if (value === null || typeof value !== "object") return false
   const o = value as Record<string, unknown>
-  return (
-    o.ok === true &&
-    typeof o.surveyId === "string" &&
-    (o.cloneFromFormId === null || typeof o.cloneFromFormId === "string")
-  )
+  return o.ok === true && "form" in o
 }
 
 export function applyOpenFormEditorResult(
   navigate: NavigateToAgentFormEditor,
   result: unknown,
+  context?: { surveyId?: string; cloneFromFormId?: string | null },
 ) {
   if (!isOpenFormEditorOk(result)) return
 
-  if (result.stagedForm != null) {
-    const draftId =
-      typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID()
-        : `${Date.now()}-${Math.random().toString(16).slice(2)}`
-    stageAgentFormDraft(draftId, result.stagedForm)
+  const surveyId = result.surveyId ?? context?.surveyId
+  if (result.form != null && surveyId) {
+    stageAgentFormDraft(result.form)
     navigate({
       to: "/surveys/$surveyId/form",
-      params: { surveyId: result.surveyId },
-      search: { agentDraft: draftId },
+      params: { surveyId },
+      search: { agentDraft: `${Date.now()}` },
     })
     return
   }
 
-  if (result.cloneFromFormId) {
+  if (context?.cloneFromFormId && surveyId) {
     navigate({
       to: "/surveys/$surveyId/form",
-      params: { surveyId: result.surveyId },
-      search: { cloneFrom: result.cloneFromFormId },
+      params: { surveyId },
+      search: { cloneFrom: context.cloneFromFormId },
     })
     return
   }
 
-  navigate({
-    to: "/surveys/$surveyId/form",
-    params: { surveyId: result.surveyId },
-    search: {},
-  })
+  if (surveyId) {
+    navigate({
+      to: "/surveys/$surveyId/form",
+      params: { surveyId },
+      search: {},
+    })
+  }
 }

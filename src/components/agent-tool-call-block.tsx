@@ -7,7 +7,6 @@ import {
   ChevronDown,
   ClipboardList,
   MessageSquareText,
-  PenLine,
   Search,
   ShieldOff,
   Wrench,
@@ -50,8 +49,6 @@ function iconForTool(name: string) {
       return MessageSquareText
     case "validate_form_json":
       return BadgeCheck
-    case "open_form_editor":
-      return PenLine
     default:
       return Wrench
   }
@@ -71,6 +68,12 @@ function isShimmerState(part: AnyToolPart): boolean {
   return false
 }
 
+function isReadyState(part: AnyToolPart): boolean {
+  return (
+    part.state === "output-available" && part.preliminary !== true
+  ) || part.state === "output-error" || part.state === "output-denied"
+}
+
 export function AgentToolCallBlock({
   part,
   className,
@@ -82,12 +85,19 @@ export function AgentToolCallBlock({
   const name = getToolName(part)
   const label = humanToolName(name)
   const Icon = iconForTool(name)
-  const showChevron = isTerminalState(part)
+  const showChevron = isReadyState(part)
   const shimmer = isShimmerState(part)
   const expandable = showChevron
 
   let body: React.ReactNode = null
-  if (part.state === "output-available") {
+  if (!isReadyState(part)) {
+    body = (
+      <div className="flex items-center gap-2 px-3 py-2 text-[11px] text-muted-foreground">
+        <span className="inline-flex size-2 rounded-full bg-muted-foreground/30" />
+        <span>Running…</span>
+      </div>
+    )
+  } else if (part.state === "output-available") {
     const text = formatParamValue(part.output)
     const clipped = text.length > 6000 ? `${text.slice(0, 6000)}…` : text
     body = (
@@ -112,28 +122,25 @@ export function AgentToolCallBlock({
 
   return (
     <div className={cn("w-full", className)}>
-      <button
-        type="button"
-        className={cn(
-          "inline-flex max-w-full items-center gap-1.5 rounded-md py-0.5 text-left text-sm text-muted-foreground transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
-          expandable && "cursor-pointer hover:bg-muted/30",
-          !expandable && "cursor-default",
-        )}
-        aria-expanded={expandable ? open : undefined}
-        aria-disabled={!expandable}
-        onClick={() => expandable && setOpen((v) => !v)}
-        {...(!expandable ? { tabIndex: -1 } : {})}
-      >
-        <Icon className="size-3.5 shrink-0" aria-hidden />
-        <span
+      {expandable ? (
+        <button
+          type="button"
           className={cn(
-            "min-w-0",
-            shimmer ? "agent-tool-name-shimmer" : undefined,
+            "inline-flex max-w-full items-center gap-1.5 rounded-md py-0.5 text-left text-sm text-muted-foreground transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+            "cursor-pointer hover:bg-muted/30",
           )}
+          aria-expanded={open}
+          onClick={() => setOpen((v) => !v)}
         >
-          {label}
-        </span>
-        {showChevron ? (
+          <Icon className="size-3.5 shrink-0" aria-hidden />
+          <span
+            className={cn(
+              "min-w-0",
+              shimmer ? "agent-tool-name-shimmer" : undefined,
+            )}
+          >
+            {label}
+          </span>
           <ChevronDown
             className={cn(
               "size-3.5 shrink-0 transition-transform duration-200",
@@ -141,12 +148,25 @@ export function AgentToolCallBlock({
             )}
             aria-hidden
           />
-        ) : (
+        </button>
+      ) : (
+        <div className="inline-flex max-w-full items-center gap-1.5 rounded-md py-0.5 text-left text-sm text-muted-foreground">
+          <Icon className="size-3.5 shrink-0" aria-hidden />
+          <span
+            className={cn(
+              "min-w-0",
+              shimmer ? "agent-tool-name-shimmer" : undefined,
+            )}
+          >
+            {label}
+          </span>
           <span className="size-3.5 shrink-0" aria-hidden />
-        )}
-      </button>
-      {expandable && open && body ? (
-        <div className="mt-1 w-full">{body}</div>
+        </div>
+      )}
+      {body ? (
+        <div className={cn("w-full", expandable && open ? "mt-1" : "mt-1")}>
+          {expandable ? (open ? body : null) : body}
+        </div>
       ) : null}
     </div>
   )

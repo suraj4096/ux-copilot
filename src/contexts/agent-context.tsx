@@ -16,10 +16,15 @@ import {
 import { lastOpenFormEditorInvocation } from "@/lib/ai/client/extract-open-form-editor-output"
 import { applyOpenDrawEditorResult, isOpenDrawEditorOk } from "@/lib/ai/client/apply-open-draw-editor"
 import { lastOpenDrawEditorInvocation } from "@/lib/ai/client/extract-open-draw-editor-output"
+import {
+  applyOpenReportArtifactResult,
+  isOpenReportArtifactOk,
+} from "@/lib/ai/client/apply-open-report-artifact"
+import { lastOpenReportArtifactInvocation } from "@/lib/ai/client/extract-open-report-artifact-output"
 
 export type AgentRuntime = ReturnType<typeof useChat>
 
-export type AgentMode = "auto" | "survey" | "draw"
+export type AgentMode = "auto" | "survey" | "draw" | "report"
 
 export type AgentCurrentContext = {
   screen: string
@@ -36,6 +41,13 @@ function isContextCompatibleWithMode(
   const isSurveyDomain = screen === "survey" || screen.startsWith("survey/")
   if (mode === "survey") return isSurveyDomain
   if (mode === "draw") return !isSurveyDomain
+  if (mode === "report") {
+    return (
+      screen === "report" ||
+      screen.startsWith("report/") ||
+      screen.includes("report")
+    )
+  }
   return true
 }
 
@@ -77,6 +89,8 @@ function emptyClientContext(): AgentClientContext {
 export function AgentProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate()
   const appliedOpenFormEditorIdsRef = React.useRef(new Set<string>())
+  const appliedOpenDrawEditorIdsRef = React.useRef(new Set<string>())
+  const appliedOpenReportArtifactIdsRef = React.useRef(new Set<string>())
   const [mode, setMode] = React.useState<AgentMode>("auto")
   const [isContextEnabled, setIsContextEnabled] = React.useState(true)
   const [currentContext, setCurrentContext] =
@@ -136,19 +150,33 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
     void applyOpenFormEditorResult(
       navigate as unknown as NavigateToAgentFormEditor,
       hit.output,
+      {
+        surveyId: clientContextRef.current.hints.surveyId,
+        cloneFromFormId: clientContextRef.current.hints.cloneFromFormId ?? undefined,
+      },
     )
   }, [runtime.messages, navigate])
 
   React.useEffect(() => {
     const hit = lastOpenDrawEditorInvocation(runtime.messages)
     if (!hit) return
-    if (appliedOpenFormEditorIdsRef.current.has(hit.toolCallId)) return
+    if (appliedOpenDrawEditorIdsRef.current.has(hit.toolCallId)) return
     if (!isOpenDrawEditorOk(hit.output)) return
-    // eslint-disable-next-line no-console
-    console.log("[AgentDraw] open_draw_editor output received", hit.output)
-    appliedOpenFormEditorIdsRef.current.add(hit.toolCallId)
+    appliedOpenDrawEditorIdsRef.current.add(hit.toolCallId)
     void applyOpenDrawEditorResult(
       navigate as unknown as (opts: { to: "/draw"; search?: { draft?: string } }) => void,
+      hit.output,
+    )
+  }, [runtime.messages, navigate])
+
+  React.useEffect(() => {
+    const hit = lastOpenReportArtifactInvocation(runtime.messages)
+    if (!hit) return
+    if (appliedOpenReportArtifactIdsRef.current.has(hit.toolCallId)) return
+    if (!isOpenReportArtifactOk(hit.output)) return
+    appliedOpenReportArtifactIdsRef.current.add(hit.toolCallId)
+    void applyOpenReportArtifactResult(
+      navigate as unknown as (opts: { to: "/report"; search?: { draft?: string } }) => void,
       hit.output,
     )
   }, [runtime.messages, navigate])
@@ -217,6 +245,10 @@ export function useAgentActions() {
   return ctx
 }
 
+export function useOptionalAgentActions() {
+  return React.useContext(AgentActionsContext)
+}
+
 export function useAgentCurrentContext() {
   const ctx = React.useContext(AgentCurrentContextContext)
   if (!ctx) {
@@ -241,6 +273,7 @@ export function deriveAgentRouteKind(
   const p = pathname.replace(/\/$/, "") || "/"
   if (p === "/") return "home"
   if (p === "/login") return "login"
+  if (p === "/report") return "report"
   if (p.startsWith("/f/")) return "public-form"
   if (p === "/surveys") return "surveys-list"
   if (/^\/surveys\/[^/]+\/form\/[^/]+$/.test(p)) return "form-detail"

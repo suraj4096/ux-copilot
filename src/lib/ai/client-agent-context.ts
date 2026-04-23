@@ -5,6 +5,7 @@ export const agentRouteKindSchema = z.enum([
   "survey-detail",
   "survey-forms",
   "form-detail",
+  "report",
   "login",
   "home",
   "public-form",

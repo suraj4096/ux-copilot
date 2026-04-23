@@ -1,7 +1,15 @@
 import { getToolName, isToolUIPart } from "ai"
 import type { UIMessage } from "ai"
+import { isReportDraftToolOutput } from "@/lib/ai/client/apply-open-report-artifact"
 
-export function lastOpenFormEditorInvocation(
+const reportToolNames = new Set([
+  "open_report_artifact",
+  "patch_report_lines",
+  "replace_report_section",
+  "append_report_section",
+])
+
+export function lastOpenReportArtifactInvocation(
   messages: Array<UIMessage>,
 ): { toolCallId: string; output: unknown } | undefined {
   for (let mi = messages.length - 1; mi >= 0; mi--) {
@@ -11,17 +19,12 @@ export function lastOpenFormEditorInvocation(
     for (let pi = parts.length - 1; pi >= 0; pi--) {
       const part = parts[pi]
       if (!isToolUIPart(part)) continue
-      if (getToolName(part) !== "validate_form_json") continue
+      if (!reportToolNames.has(getToolName(part))) continue
       if (part.state !== "output-available") continue
       if ("preliminary" in part && part.preliminary === true) continue
+      if (!isReportDraftToolOutput(part.output)) continue
       return { toolCallId: part.toolCallId, output: part.output }
     }
   }
   return undefined
-}
-
-export function lastOpenFormEditorOutput(
-  messages: Array<UIMessage>,
-): unknown | undefined {
-  return lastOpenFormEditorInvocation(messages)?.output
 }

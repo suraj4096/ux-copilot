@@ -19,7 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
 import { logoutFn } from "@/lib/auth.functions"
 import { useAuth } from "@/contexts/auth-context"
-import { useAgentActions } from "@/contexts/agent-context"
+import { useOptionalAgentActions } from "@/contexts/agent-context"
 import { initialFromName } from "@/lib/user-identity"
 import { AppLogo } from "../app-logo"
 
@@ -28,7 +28,7 @@ export function AppNavbar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const isLoginRoute = pathname === "/login"
   const { identity, isLoading, refetch } = useAuth()
-  const { resetAgent } = useAgentActions()
+  const agentActions = useOptionalAgentActions()
   const [isSigningOut, setIsSigningOut] = React.useState(false)
 
   async function onSignOut() {
@@ -65,7 +65,7 @@ export function AppNavbar() {
             className="rounded-full"
             aria-label="New chat"
             onClick={() => {
-              resetAgent()
+              agentActions?.resetAgent()
             }}
           >
             <SquarePen className="size-4" aria-hidden />

@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils"
 
 type ParsedArtifact =
   | { kind: "surveysList" }
+  | { kind: "report" }
   | { kind: "surveyDetail"; surveyId: string }
   | { kind: "newForm"; surveyId: string }
   | { kind: "formResponses"; surveyId: string; formId: string }
@@ -18,6 +19,7 @@ type ParsedArtifact =
 function parseArtifactPath(pathname: string): ParsedArtifact {
   const norm = pathname.replace(/\/+$/, "") || "/"
   const seg = norm.split("/").filter(Boolean)
+  if (seg[0] === "report") return { kind: "report" }
   if (seg[0] !== "surveys") return { kind: "other" }
   if (seg.length === 1) return { kind: "surveysList" }
   const surveyId = seg[1]
@@ -80,6 +82,13 @@ export function CurrentContextChip({ className }: { className?: string }) {
         context: "User is on the survey list screen.",
       }
     }
+    if (parsed.kind === "report") {
+      return {
+        label: "Report",
+        screen: "report",
+        context: "User is on the report artifact screen.",
+      }
+    }
     if (parsed.kind === "surveyDetail") {
       const title = readSurveyTitleFromCache(qc, parsed.surveyId)
       const json = title ? JSON.stringify({ title }) : JSON.stringify({})
@@ -121,6 +130,7 @@ export function CurrentContextChip({ className }: { className?: string }) {
       const isSurvey = isSurveyDomainScreen(derived.screen)
       if (mode === "survey" && !isSurvey) return
       if (mode === "draw" && isSurvey) return
+      if (mode === "report" && !derived.screen.includes("report")) return
     }
 
     setCurrentContext({ screen: derived.screen, context: derived.context })
@@ -138,6 +148,7 @@ export function CurrentContextChip({ className }: { className?: string }) {
     const isSurvey = isSurveyDomainScreen(derived.screen)
     if (mode === "survey" && !isSurvey) return null
     if (mode === "draw" && isSurvey) return null
+    if (mode === "report" && !derived.screen.includes("report")) return null
   }
 
   const isActive = isEnabled && Boolean(currentContext)

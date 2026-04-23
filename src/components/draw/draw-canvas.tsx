@@ -5,6 +5,88 @@ import * as go from "gojs"
 import type { ObjectData } from "gojs"
 import { ReactDiagram } from "gojs-react"
 
+function ensureParallelogramFigure() {
+  const g = globalThis as typeof globalThis & {
+    __uxcopilotParallelogramFigureRegistered?: boolean
+    __uxcopilotDocumentFigureRegistered?: boolean
+  }
+  if (g.__uxcopilotParallelogramFigureRegistered) return
+
+  go.Shape.defineFigureGenerator("Parallelogram", (_shape, w, h) => {
+    const inset = Math.max(6, Math.min(w * 0.2, h * 0.5))
+    const geo = new go.Geometry()
+    const fig = new go.PathFigure(inset, 0, true)
+    fig.add(new go.PathSegment(go.PathSegment.Line, w, 0))
+    fig.add(new go.PathSegment(go.PathSegment.Line, w - inset, h))
+    fig.add(new go.PathSegment(go.PathSegment.Line, 0, h))
+    fig.add(new go.PathSegment(go.PathSegment.Line, inset, 0))
+    geo.add(fig)
+    geo.spot1 = new go.Spot(0, 0, inset, 0)
+    geo.spot2 = new go.Spot(1, 1, -inset, 0)
+    return geo
+  })
+
+  g.__uxcopilotParallelogramFigureRegistered = true
+}
+
+function ensureDocumentFigure() {
+  const g = globalThis as typeof globalThis & {
+    __uxcopilotDocumentFigureRegistered?: boolean
+  }
+  if (g.__uxcopilotDocumentFigureRegistered) return
+
+  go.Shape.defineFigureGenerator("Document", (_shape, w, h) => {
+    const fold = Math.max(10, Math.min(w * 0.22, h * 0.25))
+    const bottomWave = Math.max(4, Math.min(h * 0.08, 10))
+    const geo = new go.Geometry()
+
+    const fig = new go.PathFigure(0, 0, true)
+    fig.add(new go.PathSegment(go.PathSegment.Line, w - fold, 0))
+    fig.add(new go.PathSegment(go.PathSegment.Line, w, fold))
+    fig.add(new go.PathSegment(go.PathSegment.Line, w, h - bottomWave))
+    fig.add(
+      new go.PathSegment(
+        go.PathSegment.Bezier,
+        w * 0.72,
+        h,
+        w * 0.9,
+        h - bottomWave,
+        w * 0.82,
+        h,
+      ),
+    )
+    fig.add(
+      new go.PathSegment(
+        go.PathSegment.Bezier,
+        w * 0.48,
+        h,
+        w * 0.62,
+        h,
+        w * 0.55,
+        h - bottomWave,
+      ),
+    )
+    fig.add(
+      new go.PathSegment(
+        go.PathSegment.Bezier,
+        0,
+        h - bottomWave,
+        w * 0.18,
+        h,
+        w * 0.08,
+        h - bottomWave,
+      ),
+    )
+    fig.add(new go.PathSegment(go.PathSegment.Line, 0, 0))
+    geo.add(fig)
+    geo.spot1 = new go.Spot(0, 0, 0, 0)
+    geo.spot2 = new go.Spot(1, 1, 0, 0)
+    return geo
+  })
+
+  g.__uxcopilotDocumentFigureRegistered = true
+}
+
 function figureForKind(kind: unknown): string {
   switch (kind) {
     case "terminal":
@@ -24,6 +106,8 @@ function figureForKind(kind: unknown): string {
 }
 
 function initDiagram() {
+  ensureParallelogramFigure()
+  ensureDocumentFigure()
   const $ = go.GraphObject.make
 
   const diagram = $(
@@ -103,10 +187,13 @@ function initDiagram() {
 export function DrawCanvas({
   initialDiagram,
   diagramKey,
+  onDiagramReady,
 }: {
   initialDiagram: unknown | null
   diagramKey: string
+  onDiagramReady?: (diagram: go.Diagram | null) => void
 }) {
+  const diagramComponentRef = React.useRef<ReactDiagram | null>(null)
   const [skipsDiagramUpdate, setSkipsDiagramUpdate] = React.useState(false)
 
   const [nodeDataArray, setNodeDataArray] = React.useState<Array<ObjectData>>([])
@@ -125,6 +212,13 @@ export function DrawCanvas({
     setLinkDataArray(Array.isArray(d.linkDataArray) ? d.linkDataArray : [])
     setModelData(d.modelData && typeof d.modelData === "object" ? d.modelData : {})
   }, [diagramKey, initialDiagram])
+
+  React.useEffect(() => {
+    onDiagramReady?.(diagramComponentRef.current?.getDiagram() ?? null)
+    return () => {
+      onDiagramReady?.(null)
+    }
+  }, [diagramKey, onDiagramReady])
 
   const onModelChange = React.useCallback((obj: unknown) => {
     // eslint-disable-next-line no-console
@@ -184,6 +278,7 @@ export function DrawCanvas({
   return (
     <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
       <ReactDiagram
+        ref={diagramComponentRef}
         initDiagram={initDiagram}
         key={diagramKey}
         divClassName="gojs-diagram"

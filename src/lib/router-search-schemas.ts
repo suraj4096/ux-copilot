@@ -95,3 +95,13 @@ export const drawSearchSchema = z.unknown().transform((raw) => {
         : undefined,
   }
 })
+
+export const reportSearchSchema = z.unknown().transform((raw) => {
+  const search = asRecord(raw)
+  return {
+    draft:
+      typeof search.draft === "string" && search.draft.trim()
+        ? search.draft.trim()
+        : undefined,
+  }
+})

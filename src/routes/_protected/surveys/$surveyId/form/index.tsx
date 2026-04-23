@@ -5,10 +5,7 @@ import { createFileRoute } from "@tanstack/react-router"
 import type { FormSchema } from "@/lib/forms/types"
 import { SurveyFormEditorPage } from "@/components/survey-form-editor-page"
 import { FormBuilderProvider } from "@/contexts/form-builder-context"
-import {
-  discardAgentFormDraft,
-  readAgentFormDraft,
-} from "@/lib/ai/client/agent-draft-storage"
+import { readAgentFormDraft } from "@/lib/ai/client/agent-draft-storage"
 import { validateFormSchema } from "@/lib/forms/validator"
 import { newFormCloneQueryOptions } from "@/lib/query-options"
 import { newFormSearchSchema } from "@/lib/router-search-schemas"
@@ -42,23 +39,27 @@ function NewSurveyFormPage() {
     FormSchema | undefined
   >(undefined)
   React.useLayoutEffect(() => {
-    const draftId = search.agentDraft
-    if (!draftId) return
-    const raw = readAgentFormDraft(draftId)
-    const stripDraftParam = () =>
+    const raw = readAgentFormDraft()
+    if (raw === undefined) {
+      if (search.agentDraft) {
+        void navigate({
+          search: (prev) => ({ ...prev, agentDraft: undefined }),
+          replace: true,
+        })
+      }
+      return
+    }
+    const parsed = validateFormSchema(raw)
+    if (parsed.ok) {
+      setAgentInitial(parsed.value)
+    }
+    if (search.agentDraft) {
       void navigate({
         search: (prev) => ({ ...prev, agentDraft: undefined }),
         replace: true,
       })
-    if (raw === undefined) {
-      stripDraftParam()
-      return
     }
-    const parsed = validateFormSchema(raw)
-    discardAgentFormDraft(draftId)
-    stripDraftParam()
-    if (parsed.ok) setAgentInitial(parsed.value)
-  }, [search.agentDraft, navigate])
+  }, [navigate, search.agentDraft])
 
   const initialForm = agentInitial ?? data.initialForm ?? undefined
   const key = `${surveyId}-${search.cloneFrom ?? "new"}-${agentInitial?.id ?? "default"}`

@@ -22,6 +22,7 @@ import {
 type ParsedPath =
   | { kind: "list" }
   | { kind: "draw" }
+  | { kind: "report" }
   | { kind: "survey"; surveyId: string }
   | { kind: "newForm"; surveyId: string }
   | { kind: "form"; surveyId: string; formId: string }
@@ -42,6 +43,7 @@ function parseArtifactPath(pathname: string): ParsedPath {
   const norm = pathname.replace(/\/+$/, "") || "/"
   const seg = norm.split("/").filter(Boolean)
   if (seg[0] === "draw") return { kind: "draw" }
+  if (seg[0] === "report") return { kind: "report" }
   if (seg[0] !== "surveys") return { kind: "other" }
   if (seg.length === 1) return { kind: "list" }
   const surveyId = seg[1]
@@ -122,6 +124,19 @@ export function ArtifactBreadcrumb({ className }: { className?: string }) {
         )}
       >
         Draw
+      </span>
+    )
+  }
+
+  if (parsed.kind === "report") {
+    return (
+      <span
+        className={cn(
+          "min-w-0 truncate text-sm font-medium text-foreground",
+          className,
+        )}
+      >
+        Report
       </span>
     )
   }

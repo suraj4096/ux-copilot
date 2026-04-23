@@ -17,6 +17,7 @@ import { createSurveyFormFn } from "@/lib/data.functions"
 import { formResponsesSearchDefaults } from "@/lib/router-search-defaults"
 import { useArtifactActions } from "@/components/artifact/artifact-actions-context"
 import { useAgentCurrentContext } from "@/contexts/agent-context"
+import { discardAgentFormDraft } from "@/lib/ai/client/agent-draft-storage"
 
 export function SurveyFormEditorPage({
   surveyId,
@@ -52,6 +53,7 @@ export function SurveyFormEditorPage({
       return res
     },
     onSuccess: async (res) => {
+      discardAgentFormDraft()
       await queryClient.invalidateQueries({
         queryKey: ["survey", surveyId, "detail"],
       })

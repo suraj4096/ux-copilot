@@ -1,13 +1,13 @@
-const STORAGE_PREFIX = "uxcopilot_agent_form_draft_v2:"
+const STORAGE_KEY = "uxcopilot_agent_form_draft_v2"
 
-export function stageAgentFormDraft(draftId: string, form: unknown) {
-  if (typeof sessionStorage === "undefined") return
-  sessionStorage.setItem(STORAGE_PREFIX + draftId, JSON.stringify(form))
+export function stageAgentFormDraft(form: unknown) {
+  if (typeof localStorage === "undefined") return
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(form))
 }
 
-export function readAgentFormDraft(draftId: string): unknown | undefined {
-  if (typeof sessionStorage === "undefined") return undefined
-  const raw = sessionStorage.getItem(STORAGE_PREFIX + draftId)
+export function readAgentFormDraft(): unknown | undefined {
+  if (typeof localStorage === "undefined") return undefined
+  const raw = localStorage.getItem(STORAGE_KEY)
   if (!raw) return undefined
   try {
     return JSON.parse(raw) as unknown
@@ -16,7 +16,7 @@ export function readAgentFormDraft(draftId: string): unknown | undefined {
   }
 }
 
-export function discardAgentFormDraft(draftId: string) {
-  if (typeof sessionStorage === "undefined") return
-  sessionStorage.removeItem(STORAGE_PREFIX + draftId)
+export function discardAgentFormDraft() {
+  if (typeof localStorage === "undefined") return
+  localStorage.removeItem(STORAGE_KEY)
 }

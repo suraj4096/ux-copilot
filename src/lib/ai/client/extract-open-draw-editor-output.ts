@@ -11,7 +11,7 @@ export function lastOpenDrawEditorInvocation(
     for (let pi = parts.length - 1; pi >= 0; pi--) {
       const part = parts[pi]
       if (!isToolUIPart(part)) continue
-      if (getToolName(part) !== "open_draw_editor") continue
+      if (getToolName(part) !== "validate_draw_json") continue
       if (part.state !== "output-available") continue
       if ("preliminary" in part && part.preliminary === true) continue
       return { toolCallId: part.toolCallId, output: part.output }

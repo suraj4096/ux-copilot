@@ -1,16 +1,11 @@
 "use client"
 
 import * as React from "react"
-import { getToolName, isTextUIPart, isToolUIPart } from "ai"
-import {
-  ChevronDown,
-  ChevronRight,
-  ClipboardList,
-  Pencil,
-  Wrench,
-} from "lucide-react"
+import { isFileUIPart, isTextUIPart, isToolUIPart, type FileUIPart } from "ai"
+import { ClipboardList, FileText, Pencil } from "lucide-react"
 
 import { AgentInput } from "@/components/agent/agent-input"
+import { AgentToolCallBlock } from "@/components/agent-tool-call-block"
 import { Markdown } from "@/components/markdown"
 import { Spinner } from "@/components/ui/spinner"
 import { useAuth } from "@/contexts/auth-context"
@@ -25,24 +20,13 @@ export function AgentPanel({ className }: { className?: string }) {
   const runtime = useAgentRuntime()
   const { identity, isLoading } = useAuth()
   const [draft, setDraft] = React.useState("")
-  const [expandedTools, setExpandedTools] = React.useState<Set<string>>(
-    () => new Set()
-  )
+  const [files, setFiles] = React.useState<Array<FileUIPart>>([])
   const [isThinking, setIsThinking] = React.useState(false)
   const thinkingFromIndexRef = React.useRef(0)
 
   const greeting = greetingByHour(new Date())
   const name = identity?.name || "there"
   const hasMessages = runtime.messages.length > 0
-
-  const toggleTool = React.useCallback((toolCallId: string) => {
-    setExpandedTools((prev) => {
-      const next = new Set(prev)
-      if (next.has(toolCallId)) next.delete(toolCallId)
-      else next.add(toolCallId)
-      return next
-    })
-  }, [])
 
   React.useEffect(() => {
     if (!isThinking) return
@@ -51,6 +35,28 @@ export function AgentPanel({ className }: { className?: string }) {
     const hasAssistantReply = newMessages.some((m) => m.role === "assistant")
     if (hasAssistantReply) setIsThinking(false)
   }, [isThinking, runtime.messages])
+
+  const submitMessage = React.useCallback(() => {
+    const text = draft.trim()
+    if (!text && files.length === 0) return
+    thinkingFromIndexRef.current = runtime.messages.length
+    setIsThinking(true)
+    if (text.length > 0) {
+      void runtime.sendMessage({ text, files })
+    } else {
+      void runtime.sendMessage({ files })
+    }
+    setDraft("")
+    setFiles([])
+  }, [draft, files, runtime])
+
+  const formatBytes = React.useCallback((bytes: number) => {
+    if (!Number.isFinite(bytes) || bytes <= 0) return "0 B"
+    if (bytes < 1024) return `${bytes} B`
+    const kb = bytes / 1024
+    if (kb < 1024) return `${kb.toFixed(1)} KB`
+    return `${(kb / 1024).toFixed(1)} MB`
+  }, [])
 
   return (
     <section
@@ -73,12 +79,10 @@ export function AgentPanel({ className }: { className?: string }) {
                 <AgentInput
                   value={draft}
                   onChange={setDraft}
-                  isDisabled={!draft.trim()}
-                  onSubmit={() => {
-                    if (!draft.trim()) return
-                    void runtime.sendMessage({ text: draft.trim() })
-                    setDraft("")
-                  }}
+                  files={files}
+                  onFilesChange={setFiles}
+                  isDisabled={!draft.trim() && files.length === 0}
+                  onSubmit={submitMessage}
                 />
               </div>
 
@@ -99,6 +103,14 @@ export function AgentPanel({ className }: { className?: string }) {
                   <Pencil className="size-3.5" aria-hidden />
                   Draw
                 </Link>
+                <Link
+                  to="/report"
+                  search={{ draft: undefined }}
+                  className={buttonVariants({ variant: "outline" })}
+                >
+                  <FileText className="size-3.5" aria-hidden />
+                  Report
+                </Link>
               </div>
             </div>
           </div>
@@ -115,8 +127,11 @@ export function AgentPanel({ className }: { className?: string }) {
                     const hasTools = Array.isArray(parts)
                       ? parts.some(isToolUIPart)
                       : false
+                    const hasFiles = Array.isArray(parts)
+                      ? parts.some(isFileUIPart)
+                      : false
 
-                    if (!hasText && !hasTools) return null
+                    if (!hasText && !hasTools && !hasFiles) return null
 
                     return (
                       <div
@@ -145,67 +160,40 @@ export function AgentPanel({ className }: { className?: string }) {
                               }
 
                               if (isToolUIPart(part)) {
-                                const toolName = getToolName(part)
-                                const toolCallId = part.toolCallId as string
-                                const isRunning =
-                                  part.state !== "output-available"
-                                const isExpanded = expandedTools.has(toolCallId)
+                                return (
+                                  <AgentToolCallBlock
+                                    key={`${message.id}-tool-${part.toolCallId}-${idx}`}
+                                    part={part}
+                                  />
+                                )
+                              }
+
+                              if (isFileUIPart(part)) {
+                                const isImage = part.mediaType.startsWith("image/")
+                                const label =
+                                  part.filename?.trim() ||
+                                  (isImage ? "Image" : "Document")
+                                const size = part.url.startsWith("data:")
+                                  ? Math.max(0, Math.floor((part.url.length * 3) / 4) - 2)
+                                  : 0
 
                                 return (
                                   <div
-                                    key={`${message.id}-tool-${toolCallId}-${idx}`}
-                                    className="rounded-lg border bg-background/60"
+                                    key={`${message.id}-file-${idx}`}
+                                    className="rounded-lg border bg-background/60 p-2"
                                   >
-                                    <button
-                                      type="button"
-                                      onClick={() => toggleTool(toolCallId)}
-                                      className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left"
-                                    >
-                                      <div className="flex min-w-0 items-center gap-2">
-                                        <Wrench
-                                          className="size-4 shrink-0 text-muted-foreground"
-                                          aria-hidden
-                                        />
-                                        <div
-                                          className={cn(
-                                            "min-w-0 truncate text-xs font-medium text-muted-foreground",
-                                            isRunning
-                                              ? "agent-tool-name-shimmer"
-                                              : null
-                                          )}
-                                        >
-                                          {toolName}
-                                        </div>
-                                      </div>
-                                      {isExpanded ? (
-                                        <ChevronDown
-                                          className="size-4 shrink-0 text-muted-foreground"
-                                          aria-hidden
-                                        />
-                                      ) : (
-                                        <ChevronRight
-                                          className="size-4 shrink-0 text-muted-foreground"
-                                          aria-hidden
-                                        />
-                                      )}
-                                    </button>
-                                    {isExpanded ? (
-                                      <div className="border-t px-3 py-2">
-                                        {isRunning ? (
-                                          <div className="text-xs text-muted-foreground">
-                                            Running…
-                                          </div>
-                                        ) : (
-                                          <pre className="max-h-64 overflow-auto rounded-md bg-muted/40 p-2 text-xs text-foreground">
-                                            {JSON.stringify(
-                                              part.output ?? null,
-                                              null,
-                                              2
-                                            )}
-                                          </pre>
-                                        )}
-                                      </div>
+                                    {isImage ? (
+                                      <img
+                                        src={part.url}
+                                        alt={label}
+                                        className="mb-2 max-h-44 rounded-md border object-contain"
+                                      />
                                     ) : null}
+                                    <div className="text-xs text-foreground">{label}</div>
+                                    <div className="text-[11px] text-muted-foreground">
+                                      {part.mediaType}
+                                      {size > 0 ? ` · ${formatBytes(size)}` : ""}
+                                    </div>
                                   </div>
                                 )
                               }
@@ -233,14 +221,10 @@ export function AgentPanel({ className }: { className?: string }) {
                   className="p-4"
                   value={draft}
                   onChange={setDraft}
-                  isDisabled={!draft.trim()}
-                  onSubmit={() => {
-                    if (!draft.trim()) return
-                    thinkingFromIndexRef.current = runtime.messages.length
-                    setIsThinking(true)
-                    void runtime.sendMessage({ text: draft.trim() })
-                    setDraft("")
-                  }}
+                  files={files}
+                  onFilesChange={setFiles}
+                  isDisabled={!draft.trim() && files.length === 0}
+                  onSubmit={submitMessage}
                 />
               </div>
             </div>

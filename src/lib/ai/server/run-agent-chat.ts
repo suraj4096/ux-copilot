@@ -165,21 +165,27 @@ function resolveAutoMode(options: {
 }): AgentMode {
   if (options.mode !== "auto") return options.mode
 
-  const screen = options.currentContext?.screen?.trim().toLowerCase() ?? ""
-  if (screen === "draw" || screen.includes("draw")) return "draw"
-  if (screen === "survey" || screen.includes("survey") || screen.includes("form")) {
-    return "survey"
-  }
-
   const latest = options.messages.at(-1)
   const latestText = latest ? uiMessageToText(latest) : ""
   const t = latestText.toLowerCase()
 
   const looksLikeDrawIntent =
-    /\b(user flow|user-flow|flowchart|diagram|wireflow|draw|decision|diamond|start|end)\b/.test(
+    /\b(user flow|user-flow|flowchart|flow chart|diagram|wireflow|wire flow|draw|sketch|mockup|login flow|onboarding flow|decision|diamond|start|end|forgot password)\b/.test(
       t,
-    ) || /\bvalidate_draw_json\b/.test(t)
+    ) || /\bvalidate_draw_json\b/.test(t) || /\bdia\b/.test(t)
+  const looksLikeReportIntent =
+    /\b(report|ux report|heuristic|findings|recommendations|executive summary|summary)\b/.test(
+      t,
+    ) || /\bopen_report_artifact\b/.test(t)
 
   if (looksLikeDrawIntent) return "draw"
+  if (looksLikeReportIntent) return "report"
+
+  const screen = options.currentContext?.screen?.trim().toLowerCase() ?? ""
+  if (screen === "draw" || screen.includes("draw")) return "draw"
+  if (screen === "report" || screen.includes("report")) return "report"
+  if (screen === "survey" || screen.includes("survey") || screen.includes("form")) {
+    return "survey"
+  }
   return "survey"
 }

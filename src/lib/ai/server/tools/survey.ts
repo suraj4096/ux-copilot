@@ -3,8 +3,6 @@ import { z } from "zod"
 
 import {
   createSurvey,
-  createSurveyForm,
-  getSurveyForOwner,
   listFormResponsesForFormPage,
   listSurveyFormsForOwnerPage,
   listSurveysForOwnerPage,
@@ -32,8 +30,6 @@ export const surveyToolNames = [
   "list_responses",
   "search_responses",
   "validate_form_json",
-  "create_form",
-  "open_form_editor",
 ] as const
 
 export function createSurveyTools(ownerEmail: string) {
@@ -211,90 +207,20 @@ export function createSurveyTools(ownerEmail: string) {
 
     validate_form_json: tool({
       description:
-        "Validate a form draft in memory only (no saving). You may OMIT ids; this tool will generate form.id and question.id fields. Question types ONLY: short_text, long_text, number, single_choice, multi_choice. Choice questions need options: [{ value, label }, ...] (value may be omitted; it will be derived from label). If ok: false, fix the payload from errors and call again. Returns errors or the normalized, fully augmented form.",
+        "Validate a form draft in memory only (no saving). You may OMIT ids; this tool will generate form.id and question.id fields. Question types ONLY: short_text, long_text, number, single_choice, multi_choice. Choice questions need options: [{ value, label }, ...] (value may be omitted; it will be derived from label). If ok: false, fix the payload from errors and call again. Returns errors or the normalized, fully augmented form. The client opens the form editor automatically when validation succeeds.",
       inputSchema: z.object({
         payload: z.unknown(),
+        surveyId: z.string().min(1).optional(),
       }),
-      execute: ({ payload }) => {
+      execute: ({ payload, surveyId }) => {
         const parsed = augmentAgentFormDraft(payload)
         if (!parsed.ok) {
           return { ok: false as const, errors: parsed.errors }
         }
-        return { ok: true as const, form: parsed.value }
+        return { ok: true as const, form: parsed.value, surveyId: surveyId ?? null }
       },
     }),
 
-    create_form: tool({
-      description:
-        "Create (persist) a new form in a survey you own. Requires a validated form JSON payload. Always call validate_form_json first; only pass formJson when ok: true. In replies, never print ids in prose; return one chip [[formTitle:/surveys/<surveyId>/form/<formId>]].",
-      inputSchema: z.object({
-        surveyId: z.string().min(1),
-        title: z.string().trim().min(1).max(160),
-        description: z.string().trim().max(500).optional(),
-        formJson: z.unknown(),
-      }),
-      execute: async ({ surveyId, title, description, formJson }) => {
-        const parsed = augmentAgentFormDraft(formJson)
-        if (!parsed.ok) {
-          return { ok: false as const, errors: parsed.errors }
-        }
-        const row = await createSurveyForm(ownerEmail, {
-          surveyId,
-          title,
-          description: description ?? null,
-          template: parsed.value,
-        })
-        if (!row) {
-          return {
-            ok: false as const,
-            error: "Survey not found or access denied.",
-          }
-        }
-        return {
-          ok: true as const,
-          form: { id: row.id, surveyId: row.surveyId, title: row.title },
-        }
-      },
-    }),
-
-    open_form_editor: tool({
-      description:
-        "Triggers client navigation to the new-form editor for a survey and optionally injects a draft into the browser session. Does NOT persist the form-user must Save in the editor. Pass formJson only when it already passes validate_form_json (same shape: allowed types short_text, long_text, number, single_choice, multi_choice; choice options as {value,label} objects). Omit formJson for a blank form. Use cloneFromFormId to clone. Prefer surveyId from UI context.",
-      inputSchema: z.object({
-        surveyId: z.string().min(1),
-        cloneFromFormId: z.string().min(1).optional(),
-        formJson: z.unknown().optional(),
-      }),
-      execute: async ({ surveyId, cloneFromFormId, formJson }) => {
-        const surveyRow = await getSurveyForOwner(ownerEmail, surveyId)
-        if (!surveyRow) {
-          return {
-            ok: false as const,
-            error: "Survey not found or access denied.",
-          }
-        }
-
-        let stagedForm: unknown | undefined
-        if (formJson !== undefined) {
-          const parsed = augmentAgentFormDraft(formJson)
-          if (!parsed.ok) {
-            return {
-              ok: false as const,
-              errors: parsed.errors,
-              hint: "Fix validation errors or call validate_form_json first.",
-            }
-          }
-          stagedForm = parsed.value
-        }
-
-        return {
-          ok: true as const,
-          surveyId,
-          cloneFromFormId: cloneFromFormId ?? null,
-          stagedForm: stagedForm ?? null,
-        }
-      },
-    }),
   }
 }
 

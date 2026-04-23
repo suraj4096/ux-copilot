@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/resizable"
 import { ArtifactTopBar } from "@/components/artifact/artifact-top-bar"
 import { ArtifactActionsProvider } from "@/components/artifact/artifact-actions-context"
+import { cn } from "@/lib/utils"
 
 export function AppShell({
   children,
@@ -20,6 +21,17 @@ export function AppShell({
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const isHome = pathname === "/"
+  const isDraw = pathname === "/draw" || pathname === "/draw/"
+
+  const artifactBodyClass = cn(
+    "flex h-full min-h-0 flex-1 flex-col",
+    isDraw ? "overflow-hidden p-0" : "overflow-auto p-2",
+  )
+
+  const artifactSectionClass = cn(
+    "h-full min-h-0 flex-1 bg-background text-foreground",
+    isDraw ? "flex min-w-0 flex-col overflow-hidden p-0" : "overflow-auto p-4",
+  )
 
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden">
@@ -35,10 +47,10 @@ export function AppShell({
               <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:hidden">
                 <AgentPanel className="min-h-0 flex-1 border-b border-border" />
                 <ArtifactActionsProvider>
-                  <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+                  <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
                     <ArtifactTopBar />
-                    <div className="flex min-h-0 flex-1 flex-col overflow-auto p-2">
-                      <section className="min-h-0 flex-1 overflow-auto bg-background p-4 text-foreground">
+                    <div className={artifactBodyClass}>
+                      <section className={artifactSectionClass}>
                         {children}
                       </section>
                     </div>
@@ -54,10 +66,10 @@ export function AppShell({
                   <ResizableHandle withHandle />
                   <ResizablePanel defaultSize={54} minSize={32}>
                     <ArtifactActionsProvider>
-                      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+                      <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
                         <ArtifactTopBar />
-                        <div className="flex min-h-0 flex-1 flex-col overflow-auto p-2">
-                          <section className="min-h-0 flex-1 overflow-auto bg-background p-4 text-foreground">
+                        <div className={artifactBodyClass}>
+                          <section className={artifactSectionClass}>
                             {children}
                           </section>
                         </div>
