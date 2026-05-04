@@ -1,3 +1,4 @@
+import { createAmazonBedrock } from "@ai-sdk/amazon-bedrock"
 import { createOpenAI } from "@ai-sdk/openai"
 
 import {
@@ -9,6 +10,32 @@ import {
   createReportTools,
   reportToolNames,
 } from "@/lib/ai/server/tools/report"
+
+export function createBedrockModel(modelId: string) {
+  const settings: Parameters<typeof createAmazonBedrock>[0] = {}
+
+  if (process.env.AWS_REGION?.trim()) {
+    settings.region = process.env.AWS_REGION.trim()
+  }
+  if (process.env.AWS_ACCESS_KEY_ID?.trim()) {
+    settings.accessKeyId = process.env.AWS_ACCESS_KEY_ID.trim()
+  }
+  if (process.env.AWS_SECRET_ACCESS_KEY?.trim()) {
+    settings.secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY.trim()
+  }
+  if (process.env.AWS_SESSION_TOKEN?.trim()) {
+    settings.sessionToken = process.env.AWS_SESSION_TOKEN.trim()
+  }
+  if (process.env.AWS_BEARER_TOKEN_BEDROCK?.trim()) {
+    settings.apiKey = process.env.AWS_BEARER_TOKEN_BEDROCK.trim()
+  }
+  if (process.env.BEDROCK_BASE_URL?.trim()) {
+    settings.baseURL = process.env.BEDROCK_BASE_URL.trim()
+  }
+
+  const bedrock = createAmazonBedrock(settings)
+  return bedrock(modelId)
+}
 
 export function createOpenAIModel(modelId: string) {
   const openai = createOpenAI({ apiKey: process.env.OPENAI_API_KEY })

@@ -1,12 +1,13 @@
 import { convertToModelMessages, isTextUIPart, stepCountIs, streamText } from "ai"
-import type { UIMessage } from "ai"
+import type { LanguageModel, UIMessage } from "ai"
 
 import {
   agentClientContextSchema,
   formatAgentClientContextForSystem,
 } from "@/lib/ai/client-agent-context"
 import {
-  getAgentChatModelId,
+  getAgentBedrockModelId,
+  getAgentOpenAIModelId,
   getAgentMaxSteps,
   requireOpenAIApiKey,
 } from "@/lib/ai/config"
@@ -14,6 +15,7 @@ import { agentSystemPrompt } from "@/lib/ai/prompts/agent-system"
 import {
   agentModes,
   createAgentTools,
+  createBedrockModel,
   createOpenAIModel,
   listToolNamesForMode,
   type AgentMode,
@@ -125,8 +127,16 @@ export async function runAgentChatStream(options: {
   })
   // eslint-disable-next-line no-console
   console.log("[runAgentChat] mode", mode, "routedMode", routedMode)
-  requireOpenAIApiKey()
-  const model = createOpenAIModel(getAgentChatModelId())
+
+  const bedrockModelId = getAgentBedrockModelId()
+  const openAIModelId = getAgentOpenAIModelId()
+  const primaryModel: LanguageModel = bedrockModelId
+    ? createBedrockModel(bedrockModelId)
+    : createOpenAIModel(openAIModelId)
+  const fallbackModel: LanguageModel | undefined = bedrockModelId
+    ? createOpenAIModel(openAIModelId)
+    : undefined
+
   const tools = createAgentTools(options.ownerEmail, routedMode)
   // eslint-disable-next-line no-console
   console.log("[runAgentChat] tools", Object.keys(tools))
@@ -145,17 +155,38 @@ export async function runAgentChatStream(options: {
     messages: windowedMessages,
   })
 
-  if (!hasTools) {
-    return streamText({ model, system, messages })
+  const streamWithFallback = async (model: LanguageModel) => {
+    if (!hasTools) {
+      return streamText({ model, system, messages })
+    }
+
+    return streamText({
+      model,
+      system,
+      messages,
+      tools,
+      stopWhen: stepCountIs(getAgentMaxSteps()),
+    })
   }
 
-  return streamText({
-    model,
-    system,
-    messages,
-    tools,
-    stopWhen: stepCountIs(getAgentMaxSteps()),
-  })
+  if (!bedrockModelId) {
+    requireOpenAIApiKey()
+    return streamWithFallback(primaryModel)
+  }
+
+  try {
+    // eslint-disable-next-line no-console
+    console.log("[runAgentChat] using Bedrock primary model", bedrockModelId)
+    return await streamWithFallback(primaryModel)
+  } catch (bedrockError) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      "[runAgentChat] Bedrock primary model failed, falling back to OpenAI:",
+      bedrockError,
+    )
+    requireOpenAIApiKey()
+    return streamWithFallback(fallbackModel!)
+  }
 }
 
 function resolveAutoMode(options: {
