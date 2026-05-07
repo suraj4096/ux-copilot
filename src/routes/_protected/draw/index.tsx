@@ -1,7 +1,7 @@
 import * as React from "react"
 import { createFileRoute } from "@tanstack/react-router"
-import * as go from "gojs"
 import { Download } from "lucide-react"
+import type * as go from "gojs"
 
 import { DrawCanvas } from "@/components/draw/draw-canvas"
 import { useArtifactActions } from "@/components/artifact/artifact-actions-context"
@@ -77,9 +77,9 @@ function DrawRoute() {
 
 function dataUrlToBlob(dataUrl: string) {
   const [header, encoded] = dataUrl.split(",")
-  const mimeTypeMatch = /^data:([^;]+);base64$/.exec(header ?? "")
-  const mimeType = mimeTypeMatch?.[1] ?? "image/png"
-  const binary = atob(encoded ?? "")
+  const mimeTypeMatch = /^data:([^;]+);base64$/.exec(header)
+  const mimeType = mimeTypeMatch ? mimeTypeMatch[1] : "image/png"
+  const binary = atob(encoded)
   const bytes = new Uint8Array(binary.length)
 
   for (let index = 0; index < binary.length; index += 1) {

@@ -4,6 +4,7 @@ import * as React from "react"
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router"
 import { LogOut, SquarePen } from "lucide-react"
 
+import { AppLogo } from "../app-logo"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
@@ -21,7 +22,6 @@ import { logoutFn } from "@/lib/auth.functions"
 import { useAuth } from "@/contexts/auth-context"
 import { useOptionalAgentActions } from "@/contexts/agent-context"
 import { initialFromName } from "@/lib/user-identity"
-import { AppLogo } from "../app-logo"
 
 export function AppNavbar() {
   const navigate = useNavigate()

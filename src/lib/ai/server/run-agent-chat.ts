@@ -1,24 +1,25 @@
 import { convertToModelMessages, isTextUIPart, stepCountIs, streamText } from "ai"
 import type { LanguageModel, UIMessage } from "ai"
 
+import type {AgentMode} from "@/lib/ai/server/agent-tools";
 import {
   agentClientContextSchema,
   formatAgentClientContextForSystem,
 } from "@/lib/ai/client-agent-context"
 import {
   getAgentBedrockModelId,
-  getAgentOpenAIModelId,
   getAgentMaxSteps,
+  getAgentOpenAIModelId,
   requireOpenAIApiKey,
 } from "@/lib/ai/config"
 import { agentSystemPrompt } from "@/lib/ai/prompts/agent-system"
 import {
+  
   agentModes,
   createAgentTools,
   createBedrockModel,
   createOpenAIModel,
-  listToolNamesForMode,
-  type AgentMode,
+  listToolNamesForMode
 } from "@/lib/ai/server/agent-tools"
 
 type AgentCurrentContext = { screen: string; context: string } | null | undefined
@@ -125,7 +126,7 @@ export async function runAgentChatStream(options: {
     currentContext: options.currentContext,
     messages: options.messages,
   })
-  // eslint-disable-next-line no-console
+   
   console.log("[runAgentChat] mode", mode, "routedMode", routedMode)
 
   const bedrockModelId = getAgentBedrockModelId()
@@ -138,7 +139,7 @@ export async function runAgentChatStream(options: {
     : undefined
 
   const tools = createAgentTools(options.ownerEmail, routedMode)
-  // eslint-disable-next-line no-console
+   
   console.log("[runAgentChat] tools", Object.keys(tools))
   const hasTools = Object.keys(tools).length > 0
 
@@ -155,7 +156,7 @@ export async function runAgentChatStream(options: {
     messages: windowedMessages,
   })
 
-  const streamWithFallback = async (model: LanguageModel) => {
+  const streamWithFallback = (model: LanguageModel) => {
     if (!hasTools) {
       return streamText({ model, system, messages })
     }
@@ -175,11 +176,11 @@ export async function runAgentChatStream(options: {
   }
 
   try {
-    // eslint-disable-next-line no-console
+     
     console.log("[runAgentChat] using Bedrock primary model", bedrockModelId)
     return await streamWithFallback(primaryModel)
   } catch (bedrockError) {
-    // eslint-disable-next-line no-console
+     
     console.warn(
       "[runAgentChat] Bedrock primary model failed, falling back to OpenAI:",
       bedrockError,
@@ -212,7 +213,7 @@ function resolveAutoMode(options: {
   if (looksLikeDrawIntent) return "draw"
   if (looksLikeReportIntent) return "report"
 
-  const screen = options.currentContext?.screen?.trim().toLowerCase() ?? ""
+  const screen = options.currentContext?.screen.trim().toLowerCase() ?? ""
   if (screen === "draw" || screen.includes("draw")) return "draw"
   if (screen === "report" || screen.includes("report")) return "report"
   if (screen === "survey" || screen.includes("survey") || screen.includes("form")) {

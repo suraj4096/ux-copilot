@@ -1,6 +1,5 @@
 "use client"
 
-import type { DynamicToolUIPart, ToolUIPart, UITools } from "ai"
 import { getToolName } from "ai"
 import {
   BadgeCheck,
@@ -12,6 +11,7 @@ import {
   Wrench,
 } from "lucide-react"
 import * as React from "react"
+import type { DynamicToolUIPart, ToolUIPart, UITools } from "ai"
 
 import { cn } from "@/lib/utils"
 

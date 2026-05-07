@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router"
 
 import type { UIMessage } from "ai"
+import type { AgentCurrentContext } from "@/contexts/agent-context"
 import { getUserFromAuthCookie } from "@/lib/auth.server"
 import { runAgentChatStream } from "@/lib/ai/server/run-agent-chat"
-import type { AgentCurrentContext } from "@/contexts/agent-context"
 
 export const Route = createFileRoute("/api/chat")({
   server: {
@@ -37,7 +37,7 @@ export const Route = createFileRoute("/api/chat")({
         }
 
         try {
-          // eslint-disable-next-line no-console
+           
           console.log("[api/chat] incoming mode", body.mode)
           const result = await runAgentChatStream({
             messages,

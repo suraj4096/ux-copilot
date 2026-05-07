@@ -2,8 +2,8 @@
 
 import * as React from "react"
 import * as go from "gojs"
-import type { ObjectData } from "gojs"
 import { ReactDiagram } from "gojs-react"
+import type { ObjectData } from "gojs"
 
 function ensureParallelogramFigure() {
   const g = globalThis as typeof globalThis & {
@@ -221,7 +221,7 @@ export function DrawCanvas({
   }, [diagramKey, onDiagramReady])
 
   const onModelChange = React.useCallback((obj: unknown) => {
-    // eslint-disable-next-line no-console
+     
     console.log("[Draw] model change", obj)
     setSkipsDiagramUpdate(true)
 

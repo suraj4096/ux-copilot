@@ -1,17 +1,18 @@
 import { z } from "zod"
 
 import type { FormChoiceOption, FormQuestion, FormSchema } from "@/lib/forms/types"
+import type {ValidationResult} from "@/lib/forms/validator/result";
 import { validateFormSchema } from "@/lib/forms/validator/template"
 import {
+  
   validationFailure,
-  validationOk,
-  type ValidationResult,
+  validationOk
 } from "@/lib/forms/validator/result"
 import { nonEmptyTrimmedString } from "@/lib/forms/validator/form-zod-shared"
 
 function generateId(prefix: string): string {
   const uuid =
-    typeof globalThis.crypto?.randomUUID === "function"
+    typeof globalThis.crypto.randomUUID === "function"
       ? globalThis.crypto.randomUUID()
       : Math.random().toString(36).slice(2, 10)
   return `${prefix}_${uuid}`

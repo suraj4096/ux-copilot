@@ -135,7 +135,7 @@ export function CurrentContextChip({ className }: { className?: string }) {
 
     setCurrentContext({ screen: derived.screen, context: derived.context })
     {
-      // eslint-disable-next-line no-console
+       
       console.log("[AgentContext] currentContext", {
         screen: derived.screen,
         context: derived.context,
@@ -152,7 +152,7 @@ export function CurrentContextChip({ className }: { className?: string }) {
   }
 
   const isActive = isEnabled && Boolean(currentContext)
-  const label = derived?.label ?? "Context"
+  const label = derived.label
 
   return (
     <button

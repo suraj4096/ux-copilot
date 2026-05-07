@@ -41,14 +41,7 @@ function isContextCompatibleWithMode(
   const isSurveyDomain = screen === "survey" || screen.startsWith("survey/")
   if (mode === "survey") return isSurveyDomain
   if (mode === "draw") return !isSurveyDomain
-  if (mode === "report") {
-    return (
-      screen === "report" ||
-      screen.startsWith("report/") ||
-      screen.includes("report")
-    )
-  }
-  return true
+  return screen === "report" || screen.startsWith("report/") || screen.includes("report")
 }
 
 const AgentRuntimeContext = React.createContext<AgentRuntime | null>(null)
@@ -137,7 +130,7 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
   })
 
   React.useEffect(() => {
-    // eslint-disable-next-line no-console
+     
     console.log("[AgentMode] current mode state", mode)
   }, [mode])
 

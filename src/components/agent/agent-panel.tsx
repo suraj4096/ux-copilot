@@ -1,9 +1,12 @@
 "use client"
 
 import * as React from "react"
-import { isFileUIPart, isTextUIPart, isToolUIPart, type FileUIPart } from "ai"
-import { ClipboardList, FileText, Pencil } from "lucide-react"
+import {  isFileUIPart, isTextUIPart, isToolUIPart } from "ai"
+import { ClipboardList, FileSearch, FileText, Pencil } from "lucide-react"
 
+import { Link } from "@tanstack/react-router"
+import { buttonVariants } from "../ui/button"
+import type {FileUIPart} from "ai";
 import { AgentInput } from "@/components/agent/agent-input"
 import { AgentToolCallBlock } from "@/components/agent-tool-call-block"
 import { Markdown } from "@/components/markdown"
@@ -12,8 +15,6 @@ import { useAuth } from "@/contexts/auth-context"
 import { useAgentRuntime } from "@/contexts/agent-context"
 import { greetingByHour } from "@/lib/user-identity"
 import { cn } from "@/lib/utils"
-import { Link } from "@tanstack/react-router"
-import { buttonVariants } from "../ui/button"
 import { surveysListSearchDefaults } from "@/lib/router-search-defaults"
 
 export function AgentPanel({ className }: { className?: string }) {
@@ -110,6 +111,13 @@ export function AgentPanel({ className }: { className?: string }) {
                 >
                   <FileText className="size-3.5" aria-hidden />
                   Report
+                </Link>
+                <Link
+                  to="/ux-audit"
+                  className={buttonVariants({ variant: "outline" })}
+                >
+                  <FileSearch className="size-3.5" aria-hidden />
+                  UX Audit
                 </Link>
               </div>
             </div>

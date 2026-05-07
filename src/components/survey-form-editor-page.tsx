@@ -102,7 +102,7 @@ export function SurveyFormEditorPage({
     const screen = `survey/${surveyId}/form/new`
     const context = `New form (draft JSON): ${formContextJson}`
     setCurrentContext({ screen, context })
-    // eslint-disable-next-line no-console
+     
     console.log("[AgentContext] currentContext", { screen, context })
   }, [formContextJson, setCurrentContext, surveyId])
 

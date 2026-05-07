@@ -6,7 +6,8 @@ import { useNavigate } from "@tanstack/react-router"
 import { useServerFn } from "@tanstack/react-start"
 import type { VariantProps } from "class-variance-authority"
 
-import { Button, buttonVariants } from "@/components/ui/button"
+import type { buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogClose,

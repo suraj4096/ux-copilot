@@ -1,21 +1,22 @@
 "use client"
 
 import * as React from "react"
-import { convertFileListToFileUIParts, type FileUIPart } from "ai"
+import {  convertFileListToFileUIParts } from "ai"
 import { ArrowUp, ChevronDown, FileImage, FileText, Plus, X } from "lucide-react"
 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu"
+import type {FileUIPart} from "ai";
 import { CurrentContextChip } from "@/components/agent/current-context-chip"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { useAgentMode } from "@/contexts/agent-context"
 import { cn } from "@/lib/utils"
-import {
-  DropdownMenu,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "../ui/dropdown-menu"
 
 function coerceAgentMode(value: unknown): ReturnType<typeof useAgentMode>["mode"] {
   if (value === "auto" || value === "survey" || value === "draw" || value === "report") {
@@ -121,8 +122,8 @@ export function AgentInput({
             onChange(event.target.value)
           }}
           onPaste={(event) => {
-            const clipboardFiles = event.clipboardData?.files
-            if (!clipboardFiles || clipboardFiles.length === 0) return
+            const clipboardFiles = event.clipboardData.files
+            if (clipboardFiles.length === 0) return
             event.preventDefault()
             void appendFileList(clipboardFiles)
           }}
@@ -201,10 +202,9 @@ export function AgentInput({
               <DropdownMenuContent className="w-40">
                 <DropdownMenuRadioGroup
                   value={mode}
-                  onValueChange={(value) => {
-                    const next = coerceAgentMode(value)
-                    // eslint-disable-next-line no-console
-                    console.log("[AgentMode] selected", value, "=>", next)
+                  onValueChange={(nextValue) => {
+                    const next = coerceAgentMode(nextValue)
+                    console.log("[AgentMode] selected", nextValue, "=>", next)
                     setMode(next)
                   }}
                 >

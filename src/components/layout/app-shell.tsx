@@ -22,6 +22,7 @@ export function AppShell({
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const isHome = pathname === "/"
   const isDraw = pathname === "/draw" || pathname === "/draw/"
+  const isUxAudit = pathname === "/ux-audit" || pathname === "/ux-audit/"
 
   const artifactBodyClass = cn(
     "flex h-full min-h-0 flex-1 flex-col",
@@ -41,6 +42,10 @@ export function AppShell({
           {isHome ? (
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
               <AgentPanel className="flex-1" />
+            </div>
+          ) : isUxAudit ? (
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+              {children}
             </div>
           ) : (
             <>

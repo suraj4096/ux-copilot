@@ -1,6 +1,7 @@
+import type {AgentReportDraft} from "@/lib/ai/client/agent-report-storage";
 import {
-  stageAgentReportDraft,
-  type AgentReportDraft,
+  
+  stageAgentReportDraft
 } from "@/lib/ai/client/agent-report-storage"
 
 export type NavigateToReport = (opts: {

@@ -14,6 +14,7 @@ import { Route as LoginIndexRouteImport } from './routes/login/index'
 import { Route as ProtectedIndexRouteImport } from './routes/_protected/index'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as FFormIdIndexRouteImport } from './routes/f/$formId/index'
+import { Route as ProtectedUxAuditIndexRouteImport } from './routes/_protected/ux-audit/index'
 import { Route as ProtectedSurveysIndexRouteImport } from './routes/_protected/surveys/index'
 import { Route as ProtectedReportIndexRouteImport } from './routes/_protected/report/index'
 import { Route as ProtectedDrawIndexRouteImport } from './routes/_protected/draw/index'
@@ -44,6 +45,11 @@ const FFormIdIndexRoute = FFormIdIndexRouteImport.update({
   id: '/f/$formId/',
   path: '/f/$formId/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ProtectedUxAuditIndexRoute = ProtectedUxAuditIndexRouteImport.update({
+  id: '/ux-audit/',
+  path: '/ux-audit/',
+  getParentRoute: () => ProtectedRoute,
 } as any)
 const ProtectedSurveysIndexRoute = ProtectedSurveysIndexRouteImport.update({
   id: '/surveys/',
@@ -86,6 +92,7 @@ export interface FileRoutesByFullPath {
   '/draw/': typeof ProtectedDrawIndexRoute
   '/report/': typeof ProtectedReportIndexRoute
   '/surveys/': typeof ProtectedSurveysIndexRoute
+  '/ux-audit/': typeof ProtectedUxAuditIndexRoute
   '/f/$formId/': typeof FFormIdIndexRoute
   '/surveys/$surveyId/': typeof ProtectedSurveysSurveyIdIndexRoute
   '/surveys/$surveyId/form/': typeof ProtectedSurveysSurveyIdFormIndexRoute
@@ -98,6 +105,7 @@ export interface FileRoutesByTo {
   '/draw': typeof ProtectedDrawIndexRoute
   '/report': typeof ProtectedReportIndexRoute
   '/surveys': typeof ProtectedSurveysIndexRoute
+  '/ux-audit': typeof ProtectedUxAuditIndexRoute
   '/f/$formId': typeof FFormIdIndexRoute
   '/surveys/$surveyId': typeof ProtectedSurveysSurveyIdIndexRoute
   '/surveys/$surveyId/form': typeof ProtectedSurveysSurveyIdFormIndexRoute
@@ -112,6 +120,7 @@ export interface FileRoutesById {
   '/_protected/draw/': typeof ProtectedDrawIndexRoute
   '/_protected/report/': typeof ProtectedReportIndexRoute
   '/_protected/surveys/': typeof ProtectedSurveysIndexRoute
+  '/_protected/ux-audit/': typeof ProtectedUxAuditIndexRoute
   '/f/$formId/': typeof FFormIdIndexRoute
   '/_protected/surveys/$surveyId/': typeof ProtectedSurveysSurveyIdIndexRoute
   '/_protected/surveys/$surveyId/form/': typeof ProtectedSurveysSurveyIdFormIndexRoute
@@ -126,6 +135,7 @@ export interface FileRouteTypes {
     | '/draw/'
     | '/report/'
     | '/surveys/'
+    | '/ux-audit/'
     | '/f/$formId/'
     | '/surveys/$surveyId/'
     | '/surveys/$surveyId/form/'
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/draw'
     | '/report'
     | '/surveys'
+    | '/ux-audit'
     | '/f/$formId'
     | '/surveys/$surveyId'
     | '/surveys/$surveyId/form'
@@ -151,6 +162,7 @@ export interface FileRouteTypes {
     | '/_protected/draw/'
     | '/_protected/report/'
     | '/_protected/surveys/'
+    | '/_protected/ux-audit/'
     | '/f/$formId/'
     | '/_protected/surveys/$surveyId/'
     | '/_protected/surveys/$surveyId/form/'
@@ -200,6 +212,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/f/$formId/'
       preLoaderRoute: typeof FFormIdIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_protected/ux-audit/': {
+      id: '/_protected/ux-audit/'
+      path: '/ux-audit'
+      fullPath: '/ux-audit/'
+      preLoaderRoute: typeof ProtectedUxAuditIndexRouteImport
+      parentRoute: typeof ProtectedRoute
     }
     '/_protected/surveys/': {
       id: '/_protected/surveys/'
@@ -251,6 +270,7 @@ interface ProtectedRouteChildren {
   ProtectedDrawIndexRoute: typeof ProtectedDrawIndexRoute
   ProtectedReportIndexRoute: typeof ProtectedReportIndexRoute
   ProtectedSurveysIndexRoute: typeof ProtectedSurveysIndexRoute
+  ProtectedUxAuditIndexRoute: typeof ProtectedUxAuditIndexRoute
   ProtectedSurveysSurveyIdIndexRoute: typeof ProtectedSurveysSurveyIdIndexRoute
   ProtectedSurveysSurveyIdFormIndexRoute: typeof ProtectedSurveysSurveyIdFormIndexRoute
   ProtectedSurveysSurveyIdFormFormIdIndexRoute: typeof ProtectedSurveysSurveyIdFormFormIdIndexRoute
@@ -261,6 +281,7 @@ const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedDrawIndexRoute: ProtectedDrawIndexRoute,
   ProtectedReportIndexRoute: ProtectedReportIndexRoute,
   ProtectedSurveysIndexRoute: ProtectedSurveysIndexRoute,
+  ProtectedUxAuditIndexRoute: ProtectedUxAuditIndexRoute,
   ProtectedSurveysSurveyIdIndexRoute: ProtectedSurveysSurveyIdIndexRoute,
   ProtectedSurveysSurveyIdFormIndexRoute:
     ProtectedSurveysSurveyIdFormIndexRoute,

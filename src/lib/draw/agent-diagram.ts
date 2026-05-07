@@ -1,9 +1,10 @@
 import { z } from "zod"
 
+import type {ValidationResult} from "@/lib/forms/validator/result";
 import {
+  
   validationFailure,
-  validationOk,
-  type ValidationResult,
+  validationOk
 } from "@/lib/forms/validator/result"
 
 const allowedNodeKinds = [
@@ -41,7 +42,7 @@ export type DrawTone = (typeof allowedTones)[number]
 
 function generateId(prefix: string): string {
   const uuid =
-    typeof globalThis.crypto?.randomUUID === "function"
+    typeof globalThis.crypto.randomUUID === "function"
       ? globalThis.crypto.randomUUID()
       : Math.random().toString(36).slice(2, 10)
   return `${prefix}_${uuid}`
@@ -119,7 +120,7 @@ export function validateAndNormalizeDrawDiagram(
   const keyById = new Map<string, number>()
   nodes.forEach((n, idx) => keyById.set(n.id, idx + 1))
 
-  const edges = raw.edges ?? []
+  const edges = raw.edges
   const linkDataArray: NormalizedGojsDiagram["linkDataArray"] = []
   for (let i = 0; i < edges.length; i++) {
     const e = edges[i]
