@@ -2,32 +2,28 @@
 
 import * as React from "react"
 import {  isFileUIPart, isTextUIPart, isToolUIPart } from "ai"
-import { ClipboardList, FileSearch, FileText, Pencil } from "lucide-react"
-
-import { Link } from "@tanstack/react-router"
-import { buttonVariants } from "../ui/button"
 import type {FileUIPart} from "ai";
 import { AgentInput } from "@/components/agent/agent-input"
 import { AgentToolCallBlock } from "@/components/agent-tool-call-block"
 import { Markdown } from "@/components/markdown"
 import { Spinner } from "@/components/ui/spinner"
-import { useAuth } from "@/contexts/auth-context"
 import { useAgentRuntime } from "@/contexts/agent-context"
-import { greetingByHour } from "@/lib/user-identity"
 import { cn } from "@/lib/utils"
-import { surveysListSearchDefaults } from "@/lib/router-search-defaults"
 
 export function AgentPanel({ className }: { className?: string }) {
   const runtime = useAgentRuntime()
-  const { identity, isLoading } = useAuth()
   const [draft, setDraft] = React.useState("")
   const [files, setFiles] = React.useState<Array<FileUIPart>>([])
   const [isThinking, setIsThinking] = React.useState(false)
   const thinkingFromIndexRef = React.useRef(0)
 
-  const greeting = greetingByHour(new Date())
-  const name = identity?.name || "there"
   const hasMessages = runtime.messages.length > 0
+  const suggestions = [
+    "Start a UX audit from uploaded PDFs and screenshots.",
+    "Create a survey to validate the main usability risks.",
+    "Sketch a user flow for the current product journey.",
+    "Generate an executive UX report from the audit findings.",
+  ]
 
   React.useEffect(() => {
     if (!isThinking) return
@@ -68,58 +64,37 @@ export function AgentPanel({ className }: { className?: string }) {
     >
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-linear-to-b from-background via-background to-muted/15">
         {!hasMessages ? (
-          <div className="flex min-h-0 flex-1 flex-col overflow-auto px-4 pb-6 md:px-6">
-            <div className="mx-auto w-full max-w-2xl pt-[24vh]">
-              <div className="space-y-3">
-                <div className="text-center text-3xl font-semibold tracking-tight text-balance md:text-4xl">
-                  {isLoading ? "Loading..." : `${greeting}, ${name}`}
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto px-4 py-8 pb-32 md:px-6">
+              <div className="w-full max-w-2xl">
+                <div className="text-center">
+                  <div className="text-lg font-semibold tracking-tight">How can I help with UX today?</div>
+                  <p className="mt-1 text-sm text-muted-foreground">Choose a starting point or type your own request below.</p>
+                </div>
+                <div className="mt-6 grid gap-2 sm:grid-cols-2">
+                  {suggestions.map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      type="button"
+                      onClick={() => setDraft(suggestion)}
+                      className="rounded-xl border bg-card p-3 text-left text-sm leading-5 transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
                 </div>
               </div>
-
-              <div className="mt-8">
-                <AgentInput
-                  value={draft}
-                  onChange={setDraft}
-                  files={files}
-                  onFilesChange={setFiles}
-                  isDisabled={!draft.trim() && files.length === 0}
-                  onSubmit={submitMessage}
-                />
-              </div>
-
-              <div className="mt-12 flex max-w-2xl w-full justify-center gap-2">
-                <Link
-                  to="/surveys"
-                  search={surveysListSearchDefaults}
-                  className={buttonVariants({ variant: "outline" })}
-                >
-                  <ClipboardList className="size-3.5" aria-hidden />
-                  Survey
-                </Link>
-                <Link
-                  to="/draw"
-                  search={{ draft: undefined }}
-                  className={buttonVariants({ variant: "outline" })}
-                >
-                  <Pencil className="size-3.5" aria-hidden />
-                  Draw
-                </Link>
-                <Link
-                  to="/report"
-                  search={{ draft: undefined }}
-                  className={buttonVariants({ variant: "outline" })}
-                >
-                  <FileText className="size-3.5" aria-hidden />
-                  Report
-                </Link>
-                <Link
-                  to="/ux-audit"
-                  className={buttonVariants({ variant: "outline" })}
-                >
-                  <FileSearch className="size-3.5" aria-hidden />
-                  UX Audit
-                </Link>
-              </div>
+            </div>
+            <div className="sticky bottom-0 z-10 shrink-0 bg-background/80 backdrop-blur">
+              <AgentInput
+                className="p-4"
+                value={draft}
+                onChange={setDraft}
+                files={files}
+                onFilesChange={setFiles}
+                isDisabled={!draft.trim() && files.length === 0}
+                onSubmit={submitMessage}
+              />
             </div>
           </div>
         ) : (
